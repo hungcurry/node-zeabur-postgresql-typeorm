@@ -8,6 +8,44 @@ import type { DataSourceOptions } from 'typeorm'
 const DATABASE_URL = getConfig<string>('db.databaseUrl')
 const DEFAULT_DB_NAME: string = 'nuxt3'
 
+async function seedMockData() {
+  try {
+    // 取得 Repository
+    const userRepository = AppDataSource.getRepository(UserSchema)
+    const orderRepository = AppDataSource.getRepository(OrderSchema)
+
+    // 1. 寫入 Users 資料 (修正 Mary 的 id 為 2)
+    const mockUsers = [
+      { id: 1, name: 'Tom' },
+      { id: 2, name: 'Mary' },
+    ]
+    await userRepository.save(mockUsers)
+    console.log('Users 假資料寫入成功！')
+
+    // 2. 寫入 Orders 資料
+    const mockOrders = [
+      { id: 101, user_id: 1, amount: 500 },
+      { id: 102, user_id: 2, amount: 300 },
+    ]
+    await orderRepository.save(mockOrders)
+    console.log('Orders 假資料寫入成功！')
+
+    // 3. 驗證結果並印出
+    const orders = await orderRepository.find({
+      relations: {
+        user: true,
+      } as any,
+    })
+
+    console.log('\n--- 最終產出的 Orders 帶有關聯資料 ---')
+    console.log(JSON.stringify(orders, null, 2))
+  } 
+  catch (seedError) {
+    // 獨立處理假資料寫入錯誤，避免因為主鍵重複等原因導致整個 App 崩潰
+    console.error('⚠️ 建立假資料時發生錯誤，但資料庫連線仍保持開啟:', seedError)
+  }
+}
+
 // 明確定義 TypeORM 配置物件的型別，確保 strict 思維
 const dbOptions: DataSourceOptions = {
   type: 'postgres',
@@ -51,6 +89,9 @@ const connectDB = async (dbName: string = DEFAULT_DB_NAME) => {
       await AppDataSource.initialize()
       console.log('運作順利：PostgreSQL 資料庫連線成功！')
     }
+
+    // 2. 連線成功後，立即自動執行建立假資料
+    await seedMockData()
   } 
   catch (error) {
     console.error('資料庫連線失敗：', error)
