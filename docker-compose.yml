@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_TypeORM
+    restart: always
+    environment:
+      # 對齊你的 DB_USERNAME
+      POSTGRES_USER: testCurryLee
+      # 對齊你的 DB_PASSWORD
+      POSTGRES_PASSWORD: password1234
+      # 對齊你的 DB_DATABASE
+      POSTGRES_DB: typeorm
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+    name: my_postgres_data

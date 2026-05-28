@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    // 轉@路徑別名設定
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    /* 檔案配置 */
+    "rootDir": "./",             // 包含根目錄的 index.ts 與 src 資料夾
+    "outDir": "./dist",          // 編譯後的 JS 檔案輸出的目錄
+
+    /* 環境與模組設定 */
+    "module": "NodeNext",        // 支援現代 Node.js 的 ESM 模組解析
+    "moduleResolution": "NodeNext",
+    "target": "ESNext",          // 編譯成最新的 JavaScript 語法
+    "lib": ["ESNext"],           // 告訴 TS 我們環境支援最新的 ES 特性
+    "types": ["node"],           // 引入 Node.js 的型別定義 (需安裝 @types/node)
+
+    /* 輸出設定 */
+    "sourceMap": true,           // 方便偵錯，對應回 TS 原始碼
+    "declaration": false,        // 後端應用程式通常不需要產出 .d.ts 檔，可關閉
+    
+    /* 嚴格檢查模式 */
+    "strict": true,              // 開啟所有嚴格檢查 (含 noImplicitAny)
+    "noUncheckedIndexedAccess": true,
+    
+    /* 現代化選項 */
+    "verbatimModuleSyntax": true, // 強制使用標準的 import/export 語法
+    "isolatedModules": true,      // 確保單一檔案編譯安全性
+    "moduleDetection": "force",
+    "skipLibCheck": true,         // 跳過第三方套件的型別檢查，加快編譯速度
+    "esModuleInterop": true       // 讓匯入 CommonJS 模組更順手
+  },
+  "include": [
+    "src/**/*.ts", 
+    "index.ts", 
+    ".env"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

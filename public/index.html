@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User CRUD - Mobile Friendly</title>
+    <style>
+      :root {
+        --primary-color: #2563eb;
+        --success-color: #059669;
+        --danger-color: #ef4444;
+        --warning-color: #f59e0b;
+        --bg-color: #f1f5f9;
+        --card-bg: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        background-color: var(--bg-color);
+        color: #1e293b;
+        margin: 0;
+        padding: 15px;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: auto;
+      }
+      h2 {
+        text-align: center;
+        margin: 20px 0;
+        font-size: 1.5rem;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin-top: 0;
+        color: #334155;
+        border-left: 4px solid var(--primary-color);
+        padding-left: 10px;
+      }
+
+      /* 卡片通用樣式 */
+      .card {
+        background: var(--card-bg);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .form-group label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #64748b;
+      }
+
+      input {
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 16px;
+        outline: none;
+      }
+
+      button {
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: filter 0.2s;
+        color: white;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+      }
+      .btn-success {
+        background: var(--success-color);
+      }
+      .btn-warning {
+        background: var(--warning-color);
+      }
+
+      /* Auth 區域專屬 */
+      .auth-section {
+        border: 2px solid #e2e8f0;
+      }
+      .token-display {
+        background: #f8fafc;
+        padding: 10px;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 12px;
+        word-break: break-all;
+        margin-top: 10px;
+        border: 1px dashed #cbd5e1;
+      }
+
+      /* CRUD 列表樣式 */
+      #userList {
+        background: var(--card-bg);
+        border-radius: 12px;
+      }
+      .user-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .badge {
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        width: fit-content;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+      .edit-btn {
+        background: #f1f5f9;
+        color: #475569;
+        padding: 6px 12px;
+        font-size: 14px;
+        border-radius: 6px;
+      }
+      .del-btn {
+        background: #fee2e2;
+        color: var(--danger-color);
+        padding: 6px 12px;
+        font-size: 14px;
+        border-radius: 6px;
+      }
+
+      @media (min-width: 480px) {
+        .form-row {
+          display: flex;
+          gap: 10px;
+          align-items: flex-end;
+        }
+        .form-row .form-group {
+          flex: 1;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>系統管理後台</h2>
+
+      <div class="card auth-section">
+        <h3>身份驗證 (Auth)</h3>
+
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="form-group">
+              <label>帳號 (Account)</label>
+              <input type="text" id="loginAcc" placeholder="請輸入帳號" value="ooopp42@hotmail.com" />
+            </div>
+            <div class="form-group">
+              <label>密碼 (Password)</label>
+              <input type="password" id="loginPwd" placeholder="請輸入密碼" value="123456" />
+            </div>
+          </div>
+          <button id="loginBtn" class="btn-primary">執行登入 (Get Token)</button>
+        </div>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee" />
+
+        <div class="form-grid">
+          <button id="checkBtn" class="btn-warning">驗證 Token 有效性</button>
+          <div id="tokenInfo" class="token-display">尚未取得 Token</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>使用者管理 (CRUD)</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>姓名</label>
+            <input type="text" id="userName" placeholder="請輸入姓名" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>年齡</label>
+              <input type="number" id="userAge" placeholder="年齡" />
+            </div>
+            <div class="form-group">
+              <label>角色</label>
+              <input type="text" id="userRole" placeholder="Role" />
+            </div>
+          </div>
+          <button id="addBtn" class="btn-primary">新增使用者</button>
+        </div>
+      </div>
+
+      <div id="userList"></div>
+    </div>
+  </body>
+
+  <script>
+    const API_URL = 'https://node-zeabur-postgresql.zeabur.app/users'
+    const AUTH_URL = 'http://localhost:8080'
+    let isEditing = null
+
+    // --- 1. Auth 邏輯層 ---
+    // 沒有註冊邏輯
+    // 只有登入與驗證邏輯,而且不連資料庫,本機操作
+    // {
+    //   "email": "ooopp42@hotmail.com",
+    //   "password": "123456"
+    // }
+    const AuthAPI = {
+      async login(account, password) {
+        const res = await fetch(`${AUTH_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account, password }),
+        })
+        return await res.json()
+      },
+      async checkToken(token) {
+        const res = await fetch(`${AUTH_URL}/auth/checkout`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+        return await res.json()
+      },
+    }
+
+    // --- 2. API 邏輯層 (Data Access) ---
+    const UserAPI = {
+      async request(url, options = {}) {
+        try {
+          const res = await fetch(url, options)
+          const result = await res.json()
+
+          if (result.status !== 'success') {
+            throw new Error(result.message || '請求失敗')
+          }
+          return result
+        } catch (err) {
+          console.error('API Error:', err)
+          throw err
+        }
+      },
+      getAll() {
+        return this.request(API_URL)
+      },
+      create(data) {
+        return this.request(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+      },
+      update(id, data) {
+        return this.request(`${API_URL}/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+      },
+      delete(id) {
+        return this.request(`${API_URL}/${id}`, { method: 'DELETE' })
+      },
+    }
+
+    // --- 3. UI 渲染層 ---
+
+    // Auth 處理
+    const loginBtn = document.getElementById('loginBtn')
+    const checkBtn = document.getElementById('checkBtn')
+    const tokenDisplay = document.getElementById('tokenInfo')
+
+    loginBtn.addEventListener('click', async () => {
+      const acc = document.getElementById('loginAcc').value
+      const pwd = document.getElementById('loginPwd').value
+
+      try {
+        loginBtn.disabled = true
+        const result = await AuthAPI.login(acc, pwd)
+        if (result.token) {
+          localStorage.setItem('user_DB_token', result.token)
+          tokenDisplay.innerText = `Token 取得成功: ${result.token.substring(0, 30)}...`
+
+          console.log(`登入成功！token:`, result)
+        } else {
+          alert('登入失敗：未取得 Token')
+        }
+      } catch (err) {
+        alert('登入請求出錯，請確認後端 http://localhost:8080 是否開啟')
+      } finally {
+        loginBtn.disabled = false
+      }
+    })
+
+    checkBtn.addEventListener('click', async () => {
+      const token = localStorage.getItem('user_DB_token')
+      if (!token) return alert('本地無 Token，請先登入')
+
+      try {
+        const result = await AuthAPI.checkToken(token)
+        console.log(`驗證結果:`, result)
+
+        alert(`驗證結果: ${result.message || '成功'}`)
+      } catch (err) {
+        alert('驗證失敗或 Token 已過期')
+      }
+    })
+
+    const renderUsers = async () => {
+      const listContainer = document.getElementById('userList')
+      try {
+        const result = await UserAPI.getAll()
+
+        if (result.data.length === 0) {
+          listContainer.innerHTML = '<div class="empty-state">目前暫無使用者資料</div>'
+          return
+        }
+
+        listContainer.innerHTML = result.data
+          .map(
+            (user) => `
+      <div class="user-item">
+        <div class="user-info">
+          <strong>${user.name}</strong>
+          <span>(${user.age} 歲)</span>
+          <span class="badge">${user.role || 'User'}</span>
+        </div>
+        <div class="actions">
+          <button class="edit-btn" 
+                  data-id="${user.id}" 
+                  data-name="${user.name}" 
+                  data-age="${user.age}" 
+                  data-role="${user.role}">編輯</button>
+          <button class="del-btn" data-id="${user.id}">刪除</button>
+        </div>
+      </div>
+    `,
+          )
+          .join('')
+      } catch (err) {
+        listContainer.innerHTML = `<div class="empty-state" style="color:red">錯誤: ${err.message}</div>`
+      }
+    }
+
+    // --- 3. 事件處理層 ---
+    const nameInput = document.getElementById('userName')
+    const ageInput = document.getElementById('userAge')
+    const roleInput = document.getElementById('userRole')
+    const addBtn = document.getElementById('addBtn')
+
+    const resetForm = () => {
+      isEditing = null
+      nameInput.value = ''
+      ageInput.value = ''
+      roleInput.value = ''
+      addBtn.innerText = '新增使用者'
+      addBtn.style.background = ''
+    }
+
+    addBtn.addEventListener('click', async () => {
+      const payload = {
+        name: nameInput.value.trim(),
+        age: parseInt(ageInput.value),
+        role: roleInput.value.trim() || 'user',
+      }
+
+      if (!payload.name || isNaN(payload.age)) return alert('請檢查姓名與年齡')
+
+      addBtn.disabled = true
+      try {
+        if (isEditing) {
+          await UserAPI.update(isEditing, payload)
+        } else {
+          await UserAPI.create(payload)
+        }
+        resetForm()
+        await renderUsers()
+      } catch (err) {
+        alert(isEditing ? '更新失敗' : '新增失敗')
+      } finally {
+        addBtn.disabled = false
+      }
+    })
+
+    document.getElementById('userList').addEventListener('click', async (e) => {
+      const id = e.target.dataset.id
+
+      if (e.target.classList.contains('del-btn')) {
+        if (!confirm('確定刪除此使用者？')) return
+        try {
+          await UserAPI.delete(id)
+          renderUsers()
+        } catch (err) {
+          alert('刪除失敗')
+        }
+      }
+
+      if (e.target.classList.contains('edit-btn')) {
+        isEditing = id
+        nameInput.value = e.target.dataset.name
+        ageInput.value = e.target.dataset.age
+        roleInput.value = e.target.dataset.role
+
+        addBtn.innerText = '儲存更新'
+        addBtn.style.background = '#059669'
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    })
+
+    document.addEventListener('DOMContentLoaded', renderUsers)
+  </script>
+</html>
