@@ -1,13 +1,8 @@
-import { Router } from 'express';
+import { Router } from 'express'
 // 使用解構賦值匯入 Controller 函式
-import {
-  getTodos,
-  createTodo,
-  updateTodo,
-  deleteTodo,
-} from '../controllers/todoController.js';
+import { getTodos, createTodo, updateTodo, deleteTodo } from '../controllers/todoController.js'
 
-const router = Router();
+const router = Router()
 
 /**
  * 路由掛載
@@ -60,7 +55,7 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Todo'
  */
-router.get('/', getTodos);
+router.get('/', getTodos)
 
 /**
  * @swagger
@@ -91,7 +86,7 @@ router.get('/', getTodos);
  *             schema:
  *               $ref: '#/components/schemas/Todo'
  */
-router.post('/', createTodo);
+router.post('/', createTodo)
 
 /**
  * @swagger
@@ -125,7 +120,7 @@ router.post('/', createTodo);
  *             schema:
  *               $ref: '#/components/schemas/Todo'
  */
-router.patch('/:id', updateTodo);
+router.patch('/:id', updateTodo)
 
 /**
  * @swagger
@@ -144,6 +139,6 @@ router.patch('/:id', updateTodo);
  *       200:
  *         description: 刪除成功
  */
-router.delete('/:id', deleteTodo);
+router.delete('/:id', deleteTodo)
 
-export default router;
+export default router

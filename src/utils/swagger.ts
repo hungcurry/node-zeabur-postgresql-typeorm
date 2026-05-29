@@ -1,5 +1,5 @@
-import swaggerJsDoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
+import swaggerJsDoc from 'swagger-jsdoc'
+import swaggerUi from 'swagger-ui-express'
 // ~npm install swagger-jsdoc swagger-ui-express
 // ~TS，通常會再加型別
 // ~npm install -D @types/swagger-jsdoc @types/swagger-ui-express
@@ -13,16 +13,16 @@ const swaggerOptions = {
       contact: {
         name: '技術支援團隊',
         url: 'https://support.example.com',
-        email: 'support@example.com'
-      }
+        email: 'support@example.com',
+      },
     },
     servers: [
       { url: 'http://localhost:8080', description: '本地開發伺服器' },
-      { url: 'https://node-zeabur-postgresql.zeabur.app', description: '生產環境伺服器' }
-    ]
+      { url: 'https://node-zeabur-postgresql.zeabur.app', description: '生產環境伺服器' },
+    ],
   },
-  apis: ['./src/routes/*.ts'] // 指定包含 Swagger 註解的路由文件位置,
-};
+  apis: ['./src/routes/*.ts'], // 指定包含 Swagger 註解的路由文件位置,
+}
 
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
-export { swaggerDocs, swaggerUi };
+const swaggerDocs = swaggerJsDoc(swaggerOptions)
+export { swaggerDocs, swaggerUi }

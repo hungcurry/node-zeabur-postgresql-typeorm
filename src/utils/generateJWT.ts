@@ -25,7 +25,6 @@ export const signToken = (payload: TTokenPayload): string => {
   return jwt.sign(payload, JWT_SECRET, options)
 }
 
-
 // * 驗證 Token
 export const verifyToken = (token: string): TTokenPayload => {
   try {

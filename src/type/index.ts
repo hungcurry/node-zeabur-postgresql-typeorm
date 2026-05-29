@@ -1,12 +1,12 @@
 type ApiResponse<T> = {
-  status: 'success' | 'error';
-  data?: T;
-  message?: string;
+  status: 'success' | 'error'
+  data?: T
+  message?: string
 }
 
 type TTodo = {
-  id: string;
-  title: string;
+  id: string
+  title: string
 }
 
 type TUser = {
@@ -22,9 +22,4 @@ type TTokenPayload = {
   role: string
 }
 
-export type {
-  ApiResponse,
-  TTodo,
-  TUser,
-  TTokenPayload
-}
+export type { ApiResponse, TTodo, TUser, TTokenPayload }
