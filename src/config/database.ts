@@ -8,7 +8,7 @@ import { OrderSchema } from '../models/OrderSchema.js'
 import type { DataSourceOptions } from 'typeorm'
 
 const DATABASE_URL = getConfig<string>('db.databaseUrl')
-const DEFAULT_DB_NAME: string = 'nuxt3'
+const DEFAULT_DB_NAME: string = 'typeorm'
 // 宣告一個全域未初始化的 DataSource 變數，維持原設計導出
 let AppDataSource: DataSource
 
@@ -53,7 +53,8 @@ const createDbOptions = (dbName: string): DataSourceOptions => {
     // synchronize: true 會根據 Entity 自動修改/產出資料表結構。
     // 在開發期（Development）非常方便，但絕對「禁止」在生產環境（Production）開啟，
     // 否則可能導致現有資料遭到覆蓋或刪除。此處透過環境變數動態控管。
-    synchronize: process.env.NODE_ENV === 'development',
+    // synchronize: process.env.NODE_ENV === 'development',
+    synchronize: true, // 僅限開發/測試階段，TypeORM 會自動根據 Schema 建立資料表
 
     // 是否輸出 SQL 日誌，建議透過環境變數控管
     logging: process.env.DB_LOGGING === 'true',
