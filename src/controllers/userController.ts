@@ -26,10 +26,14 @@ export const getAllUsers = async (req: Request, res: TUserResponse) => {
   try {
     // 取得 TypeORM 的 Repository 實例
     const userRepository = AppDataSource.getRepository(UserSchema)
+    console.log('userRepository:', userRepository)
+    
 
     // 會拿到一個陣列，即使只有一筆資料也是陣列
     // TypeORM 用法：find() 相當於 Prisma 的 findMany()
     const users = await userRepository.find()
+    console.log('users:', users)
+
 
     // 不寫,會預設帶入 200 "OK"。
     res.json({
