@@ -67,6 +67,11 @@ const createDbOptions = (dbName: string): DataSourceOptions => {
       max: 10, // 最大連線數
       connectionTimeoutMillis: 2000, // 連線逾時時間
     },
+
+    // 🔥 解決 ECONNRESET 阻斷問題
+    ssl: process.env.NODE_ENV === 'production' 
+    ? { rejectUnauthorized: false } 
+    : false,
   }
 }
 
