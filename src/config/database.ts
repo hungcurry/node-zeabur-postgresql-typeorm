@@ -8,7 +8,7 @@ import { OrderSchema } from '../models/OrderSchema.js'
 import type { DataSourceOptions } from 'typeorm'
 
 const DATABASE_URL = getConfig<string>('db.databaseUrl')
-const DEFAULT_DB_NAME: string = 'nuxt4'
+const DEFAULT_DB_NAME: string = 'nuxt3'
 // 宣告一個全域未初始化的 DataSource 變數，維持原設計導出
 let AppDataSource: DataSource
 
@@ -69,9 +69,9 @@ const createDbOptions = (dbName: string): DataSourceOptions => {
     },
 
     // 🔥 解決 ECONNRESET 阻斷問題
-    ssl: process.env.NODE_ENV === 'production' 
-    ? { rejectUnauthorized: false } 
-    : false,
+    // ssl: process.env.NODE_ENV === 'production' 
+    // ? { rejectUnauthorized: false } 
+    // : false,
   }
 }
 
