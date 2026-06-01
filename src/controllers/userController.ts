@@ -40,7 +40,8 @@ export const getAllUsers = async (req: Request, res: TUserResponse) => {
       status: 'success',
       data: users as unknown as TUser[], // 確保 Entity 格式符合你定義的 TUser 介面
     })
-  } catch (error: unknown) {
+  } 
+  catch (error: unknown) {
     handleError({
       res,
       message: '無法取得資料',
