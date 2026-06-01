@@ -53,8 +53,7 @@ const createDbOptions = (dbName: string): DataSourceOptions => {
     // synchronize: true 會根據 Entity 自動修改/產出資料表結構。
     // 在開發期（Development）非常方便，但絕對「禁止」在生產環境（Production）開啟，
     // 否則可能導致現有資料遭到覆蓋或刪除。此處透過環境變數動態控管。
-    // synchronize: process.env.NODE_ENV === 'development',
-    synchronize: true, // 僅限開發/測試階段，TypeORM 會自動根據 Schema 建立資料表
+    synchronize: process.env.NODE_ENV === 'development',
 
     // 是否輸出 SQL 日誌，建議透過環境變數控管
     logging: process.env.DB_LOGGING === 'true',
@@ -67,11 +66,6 @@ const createDbOptions = (dbName: string): DataSourceOptions => {
       max: 10, // 最大連線數
       connectionTimeoutMillis: 2000, // 連線逾時時間
     },
-
-    // 🔥 解決 ECONNRESET 阻斷問題
-    // ssl: process.env.NODE_ENV === 'production' 
-    // ? { rejectUnauthorized: false } 
-    // : false,
   }
 }
 
