@@ -17,9 +17,6 @@ import type { CreateUserInput, UpdateUserInput } from '@/models/User.js'
 // ~logger參數順序：level, message, payload
 const logger = createLogger('userController')
 
-// 取得 TypeORM 的 Repository 實例
-const userRepository = AppDataSource.getRepository(UserSchema)
-
 // Response 型別
 // 資料庫使用語法 可能會回傳單一物件或陣列
 // 這邊強制回傳陣列，統一格式，前端也好處理
@@ -27,6 +24,9 @@ type TUserResponse = Response<ApiResponse<TUser[]>>
 
 export const getAllUsers = async (req: Request, res: TUserResponse) => {
   try {
+    // 取得 TypeORM 的 Repository 實例
+    const userRepository = AppDataSource.getRepository(UserSchema)
+
     // 會拿到一個陣列，即使只有一筆資料也是陣列
     // TypeORM 用法：find() 相當於 Prisma 的 findMany()
     const users = await userRepository.find()
@@ -49,6 +49,8 @@ export const getAllUsers = async (req: Request, res: TUserResponse) => {
 export const createUser = async (req: Request, res: TUserResponse) => {
   try {
     const data: CreateUserInput = req.body
+    // 取得 TypeORM 的 Repository 實例
+    const userRepository = AppDataSource.getRepository(UserSchema)
     // 會拿到單一物件
     // TypeORM 用法：先 create 建立實例，再用 save 寫入資料庫
     const userInstance = userRepository.create(data)
@@ -81,6 +83,8 @@ export const updateUser = async (req: Request, res: TUserResponse) => {
     const data: UpdateUserInput = req.body
 
     // TypeORM 用法：先尋找該使用者是否存在
+    // 取得 TypeORM 的 Repository 實例
+    const userRepository = AppDataSource.getRepository(UserSchema)
     const user = await userRepository.findOneBy({ id })
 
     if (!user) {
@@ -121,6 +125,7 @@ export const deleteUser = async (req: Request, res: TUserResponse) => {
 
   try {
     // TypeORM 用法：先查詢是否存在
+    const userRepository = AppDataSource.getRepository(UserSchema)
     const user = await userRepository.findOneBy({ id })
 
     if (!user) {
