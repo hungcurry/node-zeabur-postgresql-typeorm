@@ -8,7 +8,7 @@ import { OrderSchema } from '../models/OrderSchema.js'
 import type { DataSourceOptions } from 'typeorm'
 
 const DATABASE_URL = getConfig<string>('db.databaseUrl')
-const DEFAULT_DB_NAME: string = 'typeorm'
+const DEFAULT_DB_NAME: string = 'react'
 // 宣告一個全域未初始化的 DataSource 變數，維持原設計導出
 let AppDataSource: DataSource
 
