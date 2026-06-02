@@ -65,7 +65,8 @@ export const createUser = async (req: Request, res: TUserResponse) => {
       status: 'success',
       data: [savedUser as unknown as TUser],
     })
-  } catch (error: unknown) {
+  } 
+  catch (error: unknown) {
     handleError({
       res,
       message: '新增失敗',
@@ -109,7 +110,8 @@ export const updateUser = async (req: Request, res: TUserResponse) => {
       status: 'success',
       data: [updatedUser as unknown as TUser],
     })
-  } catch (error: unknown) {
+  } 
+  catch (error: unknown) {
     handleError({
       res,
       message: '更新失敗',
@@ -150,7 +152,8 @@ export const deleteUser = async (req: Request, res: TUserResponse) => {
       data: [],
       message: '刪除成功',
     })
-  } catch (error: unknown) {
+  } 
+  catch (error: unknown) {
     handleError({
       res,
       message: '刪除失敗',
