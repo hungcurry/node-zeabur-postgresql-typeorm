@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import type { TUser } from './UserSchema.js'
+import type { TProfile } from './ProfileSchema.js'
 
 // 定義 Order 結構的 TypeScript 介面
 export type TOrder = {
@@ -8,7 +8,7 @@ export type TOrder = {
   amount: number
   // TS才需要
   // 核心：必須明確定義這個關聯屬性，TypeORM 才能在 relations 中找到它
-  user?: TUser
+  profile?: TProfile
 }
 
 export const OrderSchema = new EntitySchema<TOrder>({
@@ -30,9 +30,9 @@ export const OrderSchema = new EntitySchema<TOrder>({
     },
   },
   relations: {
-    // user: 虛擬要連結用的欄位:
-    user: {
-      target: 'User', // 要連到哪個 Entity : User Entity
+    // profile: 虛擬要連結用的欄位:
+    profile: {
+      target: 'Profile', // 要連到哪個 Entity : Profile Entity
       type: 'many-to-one',
       //
       // joinColumn 每個屬性是誰寫誰

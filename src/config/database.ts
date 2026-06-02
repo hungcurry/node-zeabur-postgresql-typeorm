@@ -3,6 +3,7 @@ import { seedMockData } from '../seeds/index.js'
 import { getConfig } from './index.js'
 // Schema
 import { UserSchema } from '../models/UserSchema.js'
+import { ProfileSchema } from '../models/ProfileSchema.js'
 import { OrderSchema } from '../models/OrderSchema.js'
 // type
 import type { DataSourceOptions } from 'typeorm'
@@ -15,7 +16,7 @@ let AppDataSource: DataSource
 // *沒有mongoose.connect()那種功能,所以封裝 URL 替換邏輯
 const getConnectionString = (dbName: string): string => {
   if (!DATABASE_URL) return ''
-  
+
   try {
     const url = new URL(DATABASE_URL)
     // 動態修改網址路徑為斜線加上資料庫名稱，例如：/nuxt3
@@ -55,14 +56,14 @@ const createDbOptions = (dbName: string): DataSourceOptions => {
     // 否則可能導致現有資料遭到覆蓋或刪除。此處透過環境變數動態控管。
     // synchronize: process.env.NODE_ENV === 'development',
 
-    // 🔥 關鍵修正：強制開啟自動同步結構（建表）
+    // 🔥 關鍵修正：強制開啟 生產環境自動同步結構（建表）
     synchronize: true,
 
     // 是否輸出 SQL 日誌，建議透過環境變數控管
     logging: process.env.DB_LOGGING === 'true',
 
     // 註冊資料庫實體（Entities）
-    entities: [OrderSchema, UserSchema],
+    entities: [UserSchema, OrderSchema, ProfileSchema],
 
     // 連線池優化設定（正式環境尤為重要）
     extra: {

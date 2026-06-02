@@ -5,14 +5,14 @@
 import { randomUUID } from 'crypto'
 // 替換為 TypeORM 的 AppDataSource 與 User Entity
 import { AppDataSource } from '@/config/database.js'
-import { UserSchema } from '@/models/User.js' // 假設你的 TypeORM User Entity 定義在此
+import { UserSchema } from '@/models/UserSchema.js'
 // 引入 logger
 import { createLogger } from '@/utils/logger.js'
 import { handleError } from '@/middlewares/errorHandle.js'
 // type
 import type { Request, Response } from 'express'
 import type { TUser, ApiResponse } from '@/type/index.js'
-import type { CreateUserInput, UpdateUserInput } from '@/models/User.js'
+import type { CreateUserInput, UpdateUserInput } from '@/models/UserSchema.js'
 
 // ~logger參數順序：level, message, payload
 const logger = createLogger('userController')
@@ -27,13 +27,11 @@ export const getAllUsers = async (req: Request, res: TUserResponse) => {
     // 取得 TypeORM 的 Repository 實例
     const userRepository = AppDataSource.getRepository(UserSchema)
     console.log('userRepository:', userRepository)
-    
 
     // 會拿到一個陣列，即使只有一筆資料也是陣列
     // TypeORM 用法：find() 相當於 Prisma 的 findMany()
     const users = await userRepository.find()
     console.log('users:', users)
-
 
     // 不寫,會預設帶入 200 "OK"。
     res.json({
