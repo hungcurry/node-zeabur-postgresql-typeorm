@@ -10,7 +10,7 @@ export type TUser = {
 
 export const UserSchema = new EntitySchema<TUser>({
   name: 'User', // Entity 名稱 ( 單數 + PascalCase )
-  tableName: 'users', // 🔍 配合你 Zeabur 畫面的真實資料表名稱（大小寫必須完全一致）
+  tableName: 'User', // 🔍 配合你 Zeabur 畫面的真實資料表名稱（大小寫必須完全一致）
   columns: {
     id: {
       type: 'integer',
