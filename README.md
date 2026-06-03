@@ -34,6 +34,24 @@ http://localhost:8080/todos
 // "scripts": {
 //   "clean:port": "npx kill-port 8080"
 // },
+
+// ~ 啟動資料庫
+// 🚀 啟動資料庫（背景執行）
+// docker-compose up -d
+
+// 🚀 停止資料庫（保留資料）
+// docker-compose down
+
+// 🚀 重置資料庫（刪volume）
+// docker-compose down -v
+
+// 🔄 查看目前運行狀態
+// docker-compose ps
+
+// GUI
+// ---
+// MongoDB =>  MongoDB Compass
+// Postgres => DBeaver
 ```
 
 #### 專案架構

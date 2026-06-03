@@ -78,9 +78,15 @@ export const updateUser = async (req: Request, res: TUserResponse) => {
   // ! 注意：這裡的 ID 格式驗證需要根據實際使用的資料庫類型來調整。
   // MongoDB 預設使用字串,ID 範例 => "65a1b2c3d4e5f6a7b8c9d0e1"
   // PostgreSQL 預設通常使用遞增整數Int,ID 範例 => 1, 2, 105
-  const id = Number(req.params.id)
-  if (isNaN(id)) {
+  const { id } = req.params // ( 這邊有改 適用UUID )
+  // 1. 型別防禦：確保 id 存在且必須是單純的字串
+  if (!id || typeof id !== 'string') {
     return res.status(400).json({ status: 'error', data: [], message: 'ID 格式錯誤' })
+  }
+  // 2. 格式驗證：現在 TypeScript 100% 確定 id 是 string 了，可以安全使用 .test()
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!uuidRegex.test(id)) {
+    return res.status(400).json({ status: 'error', data: [], message: 'ID 格式錯誤（非有效 UUID）' })
   }
 
   try {
@@ -123,9 +129,15 @@ export const deleteUser = async (req: Request, res: TUserResponse) => {
   // ! 注意：這裡的 ID 格式驗證需要根據實際使用的資料庫類型來調整。
   // MongoDB 預設使用字串,ID 範例 => "65a1b2c3d4e5f6a7b8c9d0e1"
   // PostgreSQL 預設通常使用遞增整數Int,ID 範例 => 1, 2, 105
-  const id = Number(req.params.id)
-  if (isNaN(id)) {
+  const { id } = req.params // ( 這邊有改 適用UUID )
+  // 1. 型別防禦：確保 id 存在且必須是單純的字串
+  if (!id || typeof id !== 'string') {
     return res.status(400).json({ status: 'error', data: [], message: 'ID 格式錯誤' })
+  }
+  // 2. 格式驗證：現在 TypeScript 100% 確定 id 是 string 了，可以安全使用 .test()
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!uuidRegex.test(id)) {
+    return res.status(400).json({ status: 'error', data: [], message: 'ID 格式錯誤（非有效 UUID）' })
   }
 
   try {
