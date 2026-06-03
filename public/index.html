@@ -230,7 +230,9 @@
 
   <script>
     const API_URL = 'https://node-zeabur-postgresql-typeorm.zeabur.app/users'
-    const AUTH_URL = 'http://localhost:8080'
+    // token驗證-前端UI 沒有做signup
+    // const AUTH_URL = 'http://localhost:8080'
+    const AUTH_URL = 'https://node-zeabur-postgresql-typeorm.zeabur.app'
     let isEditing = null
 
     // --- 1. Auth 邏輯層 ---
@@ -241,11 +243,11 @@
     //   "password": "123456"
     // }
     const AuthAPI = {
-      async login(account, password) {
+      async login(email, password) {
         const res = await fetch(`${AUTH_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ account, password }),
+          body: JSON.stringify({ email, password }),
         })
         return await res.json()
       },

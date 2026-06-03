@@ -18,7 +18,7 @@ const swaggerOptions = {
     },
     servers: [
       { url: 'http://localhost:8080', description: '本地開發伺服器' },
-      { url: 'https://node-zeabur-postgresql.zeabur.app', description: '生產環境伺服器' },
+      { url: 'https://node-zeabur-postgresql-typeorm.zeabur.app', description: '生產環境伺服器' },
     ],
   },
   apis: ['./src/routes/*.ts'], // 指定包含 Swagger 註解的路由文件位置,

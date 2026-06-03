@@ -33,19 +33,20 @@ export const OrderSchema = new EntitySchema<TOrder>({
     // profile: 虛擬要連結用的欄位:
     profile: {
       target: 'Profile', // 要連到哪個 Entity : Profile Entity
-      type: 'many-to-one',
+      type: 'many-to-one', // 關聯型態：多對一 (多個 Order 對應到一個 User)
       //
       // joinColumn 每個屬性是誰寫誰
       // | 屬性                      | 是誰的欄位              寫在哪個表 | 作用   |
       // | ------------------------ | ------------- | ----- | --------------- |
-      // | name                     | 自己表           | orders | 建立 `user_id` 欄位 |
-      // | referencedColumnName     | 對方表           | users  | 指向 `id` 欄位      |
-      // | foreignKeyConstraintName | constraint 名稱 | orders | 外鍵名稱            |
+      // | name                     | 自己表           | orders    | 建立 `user_id` 欄位 |
+      // | referencedColumnName     | 對方表           | profiles  | 指向 `id` 欄位      |
+      // | foreignKeyConstraintName | constraint 名稱 | orders    | 外鍵名稱            |
       //
       joinColumn: {
-        name: 'user_id',
-        referencedColumnName: 'id',
-        foreignKeyConstraintName: 'orders_user_id_fk',
+        // 設定 Join 的資料庫欄位
+        name: 'user_id', // 本表對應的欄位名稱 (Order 表的 user_id)
+        referencedColumnName: 'id', // 對方表 (User) 的主鍵欄位名稱
+        foreignKeyConstraintName: 'order_user_id_fk' // 外鍵約束名稱
       },
     },
   },
