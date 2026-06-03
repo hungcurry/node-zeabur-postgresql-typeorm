@@ -1,5 +1,7 @@
 #### node-zeabur-postgresql-typeorm
 
+> 指令
+
 ```jsx
 // PostgreSQL Connect Command
 // 給「人」在終端機輸入
@@ -59,7 +61,7 @@ http://localhost:8080/todos
 ```jsx
 // 預設: 5432:5432
 ports:
-  - '5432:5432'
+  - '5434:5432'
 
 左邊（5432）：你的本機電腦（Host）對外開放的門牌號碼。
 右邊（5432）：Docker 容器內部資料庫自己運作的門牌號碼（PostgreSQL 預設就是 5432，這個不用動）。
