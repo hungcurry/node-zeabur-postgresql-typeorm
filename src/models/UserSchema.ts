@@ -19,9 +19,9 @@ export const UserSchema = new EntitySchema<TUser>({
     //   nullable: false,
     // },
     id: {
-      type: 'uuid',           // 💡 1. 修改型別為 uuid
+      type: 'uuid', // 💡 1. 修改型別為 uuid
       primary: true,
-      generated: 'uuid',      // 💡 2. 讓 TypeORM / 資料庫自動處理 UUID 生成
+      generated: 'uuid', // 💡 2. 讓 TypeORM / 資料庫自動處理 UUID 生成
       nullable: false,
     },
     age: {

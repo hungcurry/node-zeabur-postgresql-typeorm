@@ -1,13 +1,8 @@
-import { Router } from 'express';
+import { Router } from 'express'
 // 使用解構賦值匯入 Controller 函式
-import { 
-  getAllUsers, 
-  createUser, 
-  updateUser, 
-  deleteUser 
-} from '../controllers/userController.js';
+import { getAllUsers, createUser, updateUser, deleteUser } from '../controllers/userController.js'
 
-const router: Router = Router();
+const router: Router = Router()
 
 /**
  * 路由掛載
@@ -18,7 +13,7 @@ const router: Router = Router();
  * @swagger
  * tags:
  *   name: Users
- *   description: 使用者管理 API
+ *   description: 使用 生產環境伺服器
  */
 
 /**
@@ -66,7 +61,7 @@ const router: Router = Router();
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-router.get('/', getAllUsers);
+router.get('/', getAllUsers)
 
 /**
  * @swagger
@@ -102,7 +97,7 @@ router.get('/', getAllUsers);
  *             schema:
  *               $ref: '#/components/schemas/User'
  */
-router.post('/', createUser);
+router.post('/', createUser)
 
 /**
  * @swagger
@@ -138,7 +133,7 @@ router.post('/', createUser);
  *             schema:
  *               $ref: '#/components/schemas/User'
  */
-router.patch('/:id', updateUser);
+router.patch('/:id', updateUser)
 
 /**
  * @swagger
@@ -157,6 +152,6 @@ router.patch('/:id', updateUser);
  *       200:
  *         description: 刪除成功
  */
-router.delete('/:id', deleteUser);
+router.delete('/:id', deleteUser)
 
-export default router;
+export default router

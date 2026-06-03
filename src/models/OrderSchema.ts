@@ -46,7 +46,7 @@ export const OrderSchema = new EntitySchema<TOrder>({
         // 設定 Join 的資料庫欄位
         name: 'user_id', // 本表對應的欄位名稱 (Order 表的 user_id)
         referencedColumnName: 'id', // 對方表 (User) 的主鍵欄位名稱
-        foreignKeyConstraintName: 'order_user_id_fk' // 外鍵約束名稱
+        foreignKeyConstraintName: 'order_user_id_fk', // 外鍵約束名稱
       },
     },
   },

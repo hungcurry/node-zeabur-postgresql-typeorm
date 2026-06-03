@@ -7,7 +7,7 @@ const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
     info: {
-      title: 'localDB API 文件',
+      title: 'PostgreSQL API 文件',
       version: '1.0.0',
       description: 'API 文件，提供了所有可用的 API 端點和使用說明。',
       contact: {
