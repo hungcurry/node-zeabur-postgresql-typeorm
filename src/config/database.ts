@@ -85,7 +85,7 @@ const connectDB = async (dbName: string = DEFAULT_DB_NAME) => {
 
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize()
-      console.log('運作順利：PostgreSQL 資料庫連線成功！')
+      console.log(`運作順利：PostgreSQL 資料庫 [${dbName}] 連線成功！`)
     }
 
     // 2. 連線成功後，開發環境 建立假資料
