@@ -3,6 +3,8 @@
 > 指令
 
 ```jsx
+// 🚀 指令
+// ---
 // PostgreSQL Connect Command
 // 給「人」在終端機輸入
 psql "postgresql://root:RDU560JAVsZE92m17Pg4nSlN3zMXbQK8@43.163.206.9:32050"
@@ -16,7 +18,8 @@ postgresql://root:RDU560JAVsZE92m17Pg4nSlN3zMXbQK8@43.163.206.9:32050
 // XXXXX?authSource=admin
 /nuxt3
 
-// API網址
+
+// 🚀 API網址
 // ---
 // ~Zeabur 使用index.html 測試
 https://node-zeabur-postgresql-typeorm.zeabur.app/users
@@ -37,23 +40,33 @@ http://localhost:8080/todos
 //   "clean:port": "npx kill-port 8080"
 // },
 
-// ~ 啟動資料庫
+
+// 🚀 啟動資料庫
+// ---
 // 🚀 啟動資料庫（背景執行）
-// docker-compose up -d
+docker-compose up -d
 
 // 🚀 停止資料庫（保留資料）
-// docker-compose down
+docker-compose down
 
 // 🚀 重置資料庫（刪volume）
-// docker-compose down -v
+docker-compose down -v
 
 // 🔄 查看目前運行狀態
-// docker-compose ps
+docker-compose ps
 
-// GUI
-// ---
+// ~GUI
 // MongoDB =>  MongoDB Compass
 // Postgres => DBeaver
+
+
+// 🚀 prisma 型別與資料表產生
+// ---
+// 生成 Prisma Client 型別：
+npx prisma generate
+
+// 步到資料庫（開發階段）：
+npx prisma db push
 ```
 
 > 資料庫的位置
