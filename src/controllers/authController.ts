@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs'
 import { randomUUID } from 'crypto'
 // 引入 logger
 import { createLogger } from '@/utils/logger.js'
-import { handleError , appError } from '@/middlewares/errorHandle.js'
+import { handleError, appError } from '@/middlewares/errorHandle.js'
 import { signToken } from '@/utils/generateJWT.js'
 // type
 import type { Request, Response, NextFunction } from 'express'
@@ -19,7 +19,7 @@ const usersTable: any[] = []
 
 // --- 註冊邏輯( 前端UI 沒有做signup ) ---
 // ~npm install bcryptjs @types/bcryptjs
-export const signup = async (req: Request, res: Response, next: NextFunction) => {
+export const handleSignup = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password, name } = req.body
 
@@ -108,7 +108,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
   }
 }
 // --- 登入邏輯 ---
-export const login = async (req: Request, res: Response) => {
+export const handleLogin = async (req: Request, res: Response) => {
   const { email, password } = req.body
   // {  前端傳過來的資料
   //   "email": "ooopp42@hotmail.com",
@@ -136,7 +136,7 @@ export const login = async (req: Request, res: Response) => {
   })
 }
 // 假設驗證成功，取得使用者資訊
-export const getProfile = (req: Request, res: Response) => {
+export const handleGetProfile = async (req: Request, res: Response) => {
   // *目的：讓後續的路由處理器可以直接從 req.user 拿到 userId 和 role 等資訊，方便做權限控制等操作。
   // const { userId } = (req as any).user;
   // const userData = await User.findById(userId);
@@ -147,7 +147,7 @@ export const getProfile = (req: Request, res: Response) => {
     role: 'admin',
   }
 
-  res.json({        
+  res.json({
     status: 'success',
     message: '令牌有效',
     user: userData,

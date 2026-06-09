@@ -5,6 +5,7 @@ import { getConfig } from './index.js'
 import { UserSchema } from '../models/UserSchema.js'
 import { ProfileSchema } from '../models/ProfileSchema.js'
 import { OrderSchema } from '../models/OrderSchema.js'
+import { ProductSchema } from '../models/ProductSchema.js'
 // type
 import type { DataSourceOptions } from 'typeorm'
 
@@ -63,7 +64,7 @@ const createDbOptions = (dbName: string): DataSourceOptions => {
     logging: process.env.DB_LOGGING === 'true',
 
     // 註冊資料庫實體（Entities）
-    entities: [UserSchema, OrderSchema, ProfileSchema],
+    entities: [UserSchema, OrderSchema, ProfileSchema, ProductSchema],
 
     // 連線池優化設定（正式環境尤為重要）
     extra: {
@@ -94,8 +95,7 @@ const connectDB = async (dbName: string = DEFAULT_DB_NAME) => {
     }
 
     return AppDataSource
-  } 
-  catch (error) {
+  } catch (error) {
     console.error('資料庫連線失敗：', error)
     process.exit(1) // 實務專案中，連線失敗通常需中止服務
   }

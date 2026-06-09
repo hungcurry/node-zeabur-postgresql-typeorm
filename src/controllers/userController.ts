@@ -3,7 +3,6 @@
 // const { v4: uuidv4 } = require('uuid');
 // ~新方式 UUID 方式
 import { randomUUID } from 'crypto'
-// 替換為 TypeORM 的 AppDataSource 與 User Entity
 import { AppDataSource } from '@/config/database.js'
 import { UserSchema } from '@/models/UserSchema.js'
 // 引入 logger
@@ -12,7 +11,7 @@ import { handleError } from '@/middlewares/errorHandle.js'
 // type
 import type { Request, Response } from 'express'
 import type { TUser, ApiResponse } from '@/type/index.js'
-import type { CreateUserInput, UpdateUserInput } from '@/models/UserSchema.js'
+import type { TCreateUserInput, TUpdateUserInput } from '@/zod/UserZod.js'
 
 // ~logger參數順序：level, message, payload
 const logger = createLogger('userController')
@@ -22,7 +21,7 @@ const logger = createLogger('userController')
 // 這邊強制回傳陣列，統一格式，前端也好處理
 type TUserResponse = Response<ApiResponse<TUser[]>>
 
-export const getAllUsers = async (req: Request, res: TUserResponse) => {
+export const handleGetUsers = async (req: Request, res: TUserResponse) => {
   try {
     // 取得 TypeORM 的 Repository 實例
     const userRepository = AppDataSource.getRepository(UserSchema)
@@ -39,7 +38,7 @@ export const getAllUsers = async (req: Request, res: TUserResponse) => {
       data: users as unknown as TUser[], // 確保 Entity 格式符合你定義的 TUser 介面
     })
   } 
-  catch (error: unknown) {
+  catch (error: any) {
     handleError({
       res,
       message: '無法取得資料',
@@ -48,10 +47,9 @@ export const getAllUsers = async (req: Request, res: TUserResponse) => {
     })
   }
 }
-
-export const createUser = async (req: Request, res: TUserResponse) => {
+export const handleCreateUser = async (req: Request, res: TUserResponse) => {
   try {
-    const data: CreateUserInput = req.body
+    const data: TCreateUserInput = req.body
     // 取得 TypeORM 的 Repository 實例
     const userRepository = AppDataSource.getRepository(UserSchema)
     // 會拿到單一物件
@@ -64,7 +62,7 @@ export const createUser = async (req: Request, res: TUserResponse) => {
       data: [savedUser as unknown as TUser],
     })
   } 
-  catch (error: unknown) {
+  catch (error: any) {
     handleError({
       res,
       message: '新增失敗',
@@ -73,8 +71,7 @@ export const createUser = async (req: Request, res: TUserResponse) => {
     })
   }
 }
-
-export const updateUser = async (req: Request, res: TUserResponse) => {
+export const handleUpdateUser = async (req: Request, res: TUserResponse) => {
   // ! 注意：這裡的 ID 格式驗證需要根據實際使用的資料庫類型來調整。
   // MongoDB 預設使用字串,ID 範例 => "65a1b2c3d4e5f6a7b8c9d0e1"
   // PostgreSQL 預設通常使用遞增整數Int,ID 範例 => 1, 2, 105
@@ -90,7 +87,7 @@ export const updateUser = async (req: Request, res: TUserResponse) => {
   }
 
   try {
-    const data: UpdateUserInput = req.body
+    const data: TUpdateUserInput = req.body
 
     // TypeORM 用法：先尋找該使用者是否存在
     // 取得 TypeORM 的 Repository 實例
@@ -115,7 +112,7 @@ export const updateUser = async (req: Request, res: TUserResponse) => {
       data: [updatedUser as unknown as TUser],
     })
   } 
-  catch (error: unknown) {
+  catch (error: any) {
     handleError({
       res,
       message: '更新失敗',
@@ -124,8 +121,7 @@ export const updateUser = async (req: Request, res: TUserResponse) => {
     })
   }
 }
-
-export const deleteUser = async (req: Request, res: TUserResponse) => {
+export const handleDeleteUser = async (req: Request, res: TUserResponse) => {
   // ! 注意：這裡的 ID 格式驗證需要根據實際使用的資料庫類型來調整。
   // MongoDB 預設使用字串,ID 範例 => "65a1b2c3d4e5f6a7b8c9d0e1"
   // PostgreSQL 預設通常使用遞增整數Int,ID 範例 => 1, 2, 105
@@ -163,7 +159,7 @@ export const deleteUser = async (req: Request, res: TUserResponse) => {
       message: '刪除成功',
     })
   } 
-  catch (error: unknown) {
+  catch (error: any) {
     handleError({
       res,
       message: '刪除失敗',

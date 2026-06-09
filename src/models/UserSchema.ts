@@ -40,19 +40,3 @@ export const UserSchema = new EntitySchema<TUser>({
     },
   },
 })
-
-// ~方法2: 偷懶-就直接寫型別就好
-export interface CreateUserInput {
-  name: string
-  age: number
-  role: string
-}
-
-export interface UpdateUserInput {
-  name?: string
-  age?: number
-  role?: string
-}
-
-// 使用方式
-// import type { CreateUserInput, UpdateUserInput } from '../models/UserSchema.js';

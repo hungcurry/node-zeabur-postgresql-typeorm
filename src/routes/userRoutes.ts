@@ -1,8 +1,13 @@
 import { Router } from 'express'
 // 使用解構賦值匯入 Controller 函式
-import { getAllUsers, createUser, updateUser, deleteUser } from '../controllers/userController.js'
+import { 
+  handleGetUsers,
+  handleCreateUser,
+  handleUpdateUser,
+  handleDeleteUser,
+} from '../controllers/userController.js'
 
-const router: Router = Router()
+const router = Router()
 
 /**
  * 路由掛載
@@ -61,7 +66,7 @@ const router: Router = Router()
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-router.get('/', getAllUsers)
+router.get('/', handleGetUsers)
 
 /**
  * @swagger
@@ -97,7 +102,7 @@ router.get('/', getAllUsers)
  *             schema:
  *               $ref: '#/components/schemas/User'
  */
-router.post('/', createUser)
+router.post('/', handleCreateUser)
 
 /**
  * @swagger
@@ -133,7 +138,7 @@ router.post('/', createUser)
  *             schema:
  *               $ref: '#/components/schemas/User'
  */
-router.patch('/:id', updateUser)
+router.patch('/:id', handleUpdateUser)
 
 /**
  * @swagger
@@ -152,6 +157,6 @@ router.patch('/:id', updateUser)
  *       200:
  *         description: 刪除成功
  */
-router.delete('/:id', deleteUser)
+router.delete('/:id', handleDeleteUser)
 
 export default router

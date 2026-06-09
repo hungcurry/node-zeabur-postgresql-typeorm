@@ -50,7 +50,7 @@ type TTodoResponse = Response<ApiResponse<TTodo[]>>
 
  */
 
-export const getTodos = (req: Request, res: TTodoResponse, next: NextFunction) => {
+export const handleGetTodos = async (req: Request, res: TTodoResponse, next: NextFunction) => {
   try {
     // 實務中這裡可能是
     // const todos = await TodoModel.find();
@@ -96,7 +96,7 @@ export const getTodos = (req: Request, res: TTodoResponse, next: NextFunction) =
     next(AppError)
   }
 }
-export const createTodo = (req: Request, res: TTodoResponse) => {
+export const handleCreateTodo = async (req: Request, res: TTodoResponse) => {
   try {
     const { title } = req.body
     if (!title) return handleError({ res, message: 'title required' })
@@ -121,7 +121,7 @@ export const createTodo = (req: Request, res: TTodoResponse) => {
     })
   }
 }
-export const updateTodo = (req: Request, res: TTodoResponse) => {
+export const handleUpdateTodo = async (req: Request, res: TTodoResponse) => {
   try {
     const { id } = req.params
     const { title } = req.body
@@ -151,7 +151,7 @@ export const updateTodo = (req: Request, res: TTodoResponse) => {
     })
   }
 }
-export const deleteTodo = (req: Request, res: TTodoResponse) => {
+export const handleDeleteTodo = async (req: Request, res: TTodoResponse) => {
   try {
     const { id } = req.params
     const index = todos.findIndex((item) => item.id === id)

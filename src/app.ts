@@ -11,6 +11,7 @@ import type { Application, Request, Response, NextFunction } from 'express'
 import userRoutes from './routes/userRoutes.js'
 import todoRoutes from './routes/todoRoutes.js'
 import authRoutes from './routes/authRoutes.js'
+import productRoutes from './routes/productRoutes.js'
 
 // 定義 app 為 Express Application 型別
 const app: Application = express()
@@ -57,7 +58,7 @@ app.get('/test', (req, res) => {
 app.use('/users', userRoutes)
 app.use('/todos', todoRoutes)
 app.use('/auth', authRoutes)
-
+app.use('/products', productRoutes)
 // 錯誤處理,放在所有路由之後
 app.use(handleNotFound)
 app.use(handleGlobalError)

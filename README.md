@@ -19,6 +19,49 @@ postgresql://root:RDU560JAVsZE92m17Pg4nSlN3zMXbQK8@43.163.206.9:32050
 /nuxt3
 
 
+// 🚀 啟動資料庫
+// ---
+// ~GUI
+// MongoDB =>  MongoDB Compass
+// Postgres => DBeaver
+
+// 啟動資料庫（背景執行）
+docker-compose up -d
+
+// 停止資料庫（保留資料）
+docker-compose down
+
+// 重置資料庫（刪volume）
+docker-compose down -v
+
+// 查看目前運行狀態
+docker-compose ps
+
+
+// 🚀 8080 指令
+// ---
+// 查看 8080 port
+netstat -ano | findstr :8080
+
+// 清除 占用 8080 的程序
+npm run clean:port
+"scripts": {
+  "clean:port": "npx kill-port 8080"
+}
+
+
+// 🚀 prisma 型別與資料表產生
+// ---
+// 生成 Prisma Client 型別：
+npx prisma generate
+
+// 同步到資料庫（開發階段）：
+npx prisma db push
+```
+
+> 網址
+
+```jsx
 // 🚀 API網址
 // ---
 // ~Zeabur 使用index.html 測試
@@ -27,46 +70,17 @@ https://node-zeabur-postgresql-typeorm.zeabur.app/users
 // ~swagger
 https://node-zeabur-postgresql-typeorm.zeabur.app/api-docs
 
-// ~ 本機 使用postman 測試
+
+// 🚀 本機 使用postman 測試
+// ---
 // PORT=8080
 http://localhost:8080/todos
 
-// ~查看 8080 port
-// netstat -ano | findstr :8080
+// 測試前端送資料過去 zod驗證
+http://localhost:8080/products
 
-// ~清除 占用 8080 的程序
-// npm run clean:port
-// "scripts": {
-//   "clean:port": "npx kill-port 8080"
-// },
+http://127.0.0.1:8080/public/products.html
 
-
-// 🚀 啟動資料庫
-// ---
-// 🚀 啟動資料庫（背景執行）
-docker-compose up -d
-
-// 🚀 停止資料庫（保留資料）
-docker-compose down
-
-// 🚀 重置資料庫（刪volume）
-docker-compose down -v
-
-// 🔄 查看目前運行狀態
-docker-compose ps
-
-// ~GUI
-// MongoDB =>  MongoDB Compass
-// Postgres => DBeaver
-
-
-// 🚀 prisma 型別與資料表產生
-// ---
-// 生成 Prisma Client 型別：
-npx prisma generate
-
-// 步到資料庫（開發階段）：
-npx prisma db push
 ```
 
 > 資料庫的位置
@@ -113,6 +127,28 @@ node-zeabur-postgresql-typeorm/
 └── tsconfig.json               # 建議使用 NodeNext 或 ESNext 模組規範
 ```
 
+
+#### 指令安裝
+
+```jsx
+// TypeORM 專案依賴安裝指令
+# 安裝 生產環境 (dependencies)
+npm install express cors dotenv cross-env bcryptjs jsonwebtoken pg reflect-metadata swagger-jsdoc swagger-ui-express typeorm pino pino-http pino-roll
+
+# 安裝 開發環境 (devDependencies)
+npm install -D typescript tsx nodemon tsc-alias pino-pretty @types/node @types/express @types/cors @types/pg @types/bcryptjs @types/jsonwebtoken @types/swagger-jsdoc @types/swagger-ui-express
+```
+
+```jsx
+"scripts": {
+  "dev": "cross-env NODE_ENV=development && nodemon --exec tsx index.ts",
+  "build": "tsc && tsc-alias -p tsconfig.json",
+  "start": "cross-env NODE_ENV=production && node dist/index.js",
+  "clean:port": "npx kill-port 8080"
+},
+```
+
+
 #### TS @路徑問題
 
 ```jsx
@@ -153,25 +189,6 @@ npm install -D tsc-alias
 原因：Vite 這種工具會在背後幫你補全路徑，所以你可以寫得很漂亮。
 ```
 
-#### 指令安裝
-
-```jsx
-// TypeORM 專案依賴安裝指令
-# 安裝 生產環境 (dependencies)
-npm install express cors dotenv cross-env bcryptjs jsonwebtoken pg reflect-metadata swagger-jsdoc swagger-ui-express typeorm pino pino-http pino-roll
-
-# 安裝 開發環境 (devDependencies)
-npm install -D typescript tsx nodemon tsc-alias pino-pretty @types/node @types/express @types/cors @types/pg @types/bcryptjs @types/jsonwebtoken @types/swagger-jsdoc @types/swagger-ui-express
-```
-
-```jsx
-"scripts": {
-  "dev": "cross-env NODE_ENV=development && nodemon --exec tsx index.ts",
-  "build": "tsc && tsc-alias -p tsconfig.json",
-  "start": "cross-env NODE_ENV=production && node dist/index.js",
-  "clean:port": "npx kill-port 8080"
-},
-```
 
 #### Zeabur開PostgreSQL資料表 注意事項
 
@@ -213,4 +230,17 @@ CREATE TABLE users (
     age INT NOT NULL,
     role TEXT NOT NULL DEFAULT 'user'
 );
+```
+
+
+#### TypeOrm 注意事項
+
+* 新建立 Schema
+```jsx
+// models/ 新建立 XyyyyySchema.ts
+// ----
+需要去 database.ts / createDbOptions 設定新增
+
+import { ProductSchema } from '../models/ProductSchema.js'
+entities: [ UserSchema, OrderSchema, ProfileSchema, ProductSchema ],
 ```
