@@ -2,19 +2,40 @@ import { DataSource } from 'typeorm'
 import { seedMockData } from '../seeds/index.js'
 import { getConfig } from './index.js'
 // Schema
+// === 無關連表 ===
 import { UserSchema } from '../models/UserSchema.js'
+// === 父表 (主表) ===
 import { ProfileSchema } from '../models/ProfileSchema.js'
+import { CategorySchema } from '../models/CategorySchema.js'
+// === 子表 (從表) ===
 import { OrderSchema } from '../models/OrderSchema.js'
 import { ProductSchema } from '../models/ProductSchema.js'
 // type
 import type { DataSourceOptions } from 'typeorm'
 
 const DATABASE_URL = getConfig<string>('db.databaseUrl')
-const DEFAULT_DB_NAME: string = 'typeorm'
-// 宣告一個全域未初始化的 DataSource 變數，維持原設計導出
+const DEFAULT_DB_NAME: string = 'typeorm' // 要連的資料庫
 let AppDataSource: DataSource
 
-// *沒有mongoose.connect()那種功能,所以封裝 URL 替換邏輯
+// *所有Entity 註冊清單（AppDataSource 使用）
+const dbEntities = [
+  UserSchema,
+  // === 父表 (主表) ===
+  ProfileSchema,
+  CategorySchema,
+  // === 子表 (從表) ===
+  OrderSchema,
+  ProductSchema,
+]
+// *Seeder 清空時的保留資料 Entity 清單
+const keepEntities = new Set([
+  // 用 new Set() 意義
+  // xxx.has(e) 快速查找（hash）不用掃描整個陣列
+  CategorySchema,
+  ProductSchema,
+])
+
+// 沒有mongoose.connect()那種功能,所以封裝 URL 替換邏輯
 const getConnectionString = (dbName: string): string => {
   if (!DATABASE_URL) return ''
 
@@ -23,13 +44,11 @@ const getConnectionString = (dbName: string): string => {
     // 動態修改網址路徑為斜線加上資料庫名稱，例如：/nuxt3
     url.pathname = `/${dbName}`
     return url.toString()
-  } 
-  catch (error) {
+  } catch (error) {
     console.error('DATABASE_URL 格式錯誤，無法解析：', error)
     return DATABASE_URL // 若解析失敗，安全降級回原本的 URL
   }
 }
-
 // 動態建立 TypeORM 配置物件的函式
 const createDbOptions = (dbName: string): DataSourceOptions => {
   // 檢查 DATABASE_URL 是否有值（不是空字串，也不是 undefined/null）
@@ -64,7 +83,7 @@ const createDbOptions = (dbName: string): DataSourceOptions => {
     logging: process.env.DB_LOGGING === 'true',
 
     // 註冊資料庫實體（Entities）
-    entities: [UserSchema, OrderSchema, ProfileSchema, ProductSchema],
+    entities: [...dbEntities],
 
     // 連線池優化設定（正式環境尤為重要）
     extra: {
@@ -73,7 +92,6 @@ const createDbOptions = (dbName: string): DataSourceOptions => {
     },
   }
 }
-
 const connectDB = async (dbName: string = DEFAULT_DB_NAME) => {
   // 檢查 DATABASE_URL 是否有值（不是空字串，也不是 undefined/null）
   const isCloudMode = DATABASE_URL !== undefined && DATABASE_URL !== ''
@@ -101,4 +119,4 @@ const connectDB = async (dbName: string = DEFAULT_DB_NAME) => {
   }
 }
 
-export { AppDataSource, connectDB }
+export { AppDataSource, connectDB, dbEntities, keepEntities }

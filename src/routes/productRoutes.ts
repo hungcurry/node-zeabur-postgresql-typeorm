@@ -2,7 +2,8 @@ import { Router } from 'express'
 // 使用解構賦值匯入 Controller 函式
 import { 
   handleGetProducts,
-  handleCreateProduct 
+  handleCreateProduct,
+  handleUpdateProduct
 } from '../controllers/productController.js'
 
 const router = Router()
@@ -16,5 +17,6 @@ const router = Router()
 // 然後把請求「轉交」給對應的 Controller 函式。
 router.get('/', handleGetProducts)
 router.post('/', handleCreateProduct)
+router.patch('/:id', handleUpdateProduct)
 
 export default router

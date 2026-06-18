@@ -1,13 +1,18 @@
 import { EntitySchema } from 'typeorm'
 
-// 定義 User 結構的 TypeScript 介面
+// ==============================
+// TypeScript 型別 (僅用於資料庫模型)
+// ==============================
 export type TUser = {
-  id: string
-  age: number | null
-  name: string | null
-  role: string | null
+  id: string // 💡 主鍵是用 UUID (字串)
+  age: number
+  name: string
+  role: string
 }
 
+// ==============================
+// Entity Schema
+// ==============================
 export const UserSchema = new EntitySchema<TUser>({
   name: 'User', // Entity 名稱 ( 單數 + PascalCase )
   tableName: 'users', // 對應資料表名稱 ( 複數 + snake_case + 小寫 )
@@ -19,9 +24,9 @@ export const UserSchema = new EntitySchema<TUser>({
     //   nullable: false,
     // },
     id: {
-      type: 'uuid', // 💡 1. 修改型別為 uuid
+      type: 'uuid', // UUID 型別
       primary: true,
-      generated: 'uuid', // 💡 2. 讓 TypeORM / 資料庫自動處理 UUID 生成
+      generated: 'uuid', // 資料庫自動處理 UUID 生成
       nullable: false,
     },
     age: {

@@ -1,30 +1,62 @@
 import { EntitySchema } from 'typeorm'
 import type { TProfile } from './ProfileSchema.js'
 
-// 定義 Order 結構的 TypeScript 介面
+// ==============================
+// TypeScript 型別 (僅用於資料庫模型)
+// ==============================
 export type TOrder = {
   id: number
-  user_id: number
   amount: number
-  // TS才需要
-  // 核心：必須明確定義這個關聯屬性，TypeORM 才能在 relations 中找到它
+
+  // Timestamp  =>  1781245804387 (毫秒-number)
+  // ----------
+  createdAt: number
+  updatedAt: number
+
+  // 外來鍵關聯(FK)（DB 欄位）
+  profile_id: number
+  // TS才需要,relation（僅 runtime join 使用）
   profile?: TProfile
 }
 
+// ==============================
+// Entity Schema
+// ==============================
+const bigintTransformer = {
+  // bigint 透過 pg 驅動讀取時會回傳字串
+  // 例如："1781248003298"
+  // 使用 transformer 將字串轉成 number
+  to: (value?: number) => value,
+  from: (value: string) => Number(value),
+}
+
+// 誰有 Foreign Key，誰就是(子表)（Child）
 export const OrderSchema = new EntitySchema<TOrder>({
   name: 'Order', // Entity 名稱 ( 單數 + PascalCase )
   tableName: 'orders', // 對應資料表名稱 ( 複數 + snake_case + 小寫 )
   columns: {
     id: {
-      primary: true, // 主鍵 (每筆資料唯一)
       type: 'integer', // 整數型別
+      primary: true, // 主鍵 (每筆資料唯一)
+      generated: 'increment', // 自動遞增 (PostgreSQL 的 SERIAL)
       nullable: false, // 不可為空值
     },
-    user_id: {
+    amount: {
       type: 'integer',
       nullable: false,
     },
-    amount: {
+    // Timestamp  =>  1781248003298 (毫秒-number)
+    // ----------
+    createdAt: {
+      type: 'bigint',
+      transformer: bigintTransformer,
+    },
+    updatedAt: {
+      type: 'bigint',
+      transformer: bigintTransformer,
+    },
+    // 外來鍵關聯(FK)
+    profile_id: {
       type: 'integer',
       nullable: false,
     },
@@ -33,21 +65,22 @@ export const OrderSchema = new EntitySchema<TOrder>({
     // profile: 虛擬要連結用的欄位:
     profile: {
       target: 'Profile', // 要連到哪個 Entity : Profile Entity
-      type: 'many-to-one', // 關聯型態：多對一 (多個 Order 對應到一個 User)
-      //
+      type: 'many-to-one', // 關聯型態：多對一 (多個 Order 對應到一個 Profile)
       // joinColumn 每個屬性是誰寫誰
-      // | 屬性                      | 是誰的欄位              寫在哪個表 | 作用   |
-      // | ------------------------ | ------------- | ----- | --------------- |
-      // | name                     | 自己表           | orders    | 建立 `user_id` 欄位 |
-      // | referencedColumnName     | 對方表           | profiles  | 指向 `id` 欄位      |
-      // | foreignKeyConstraintName | constraint 名稱 | orders    | 外鍵名稱            |
-      //
+      // 誰有 Foreign Key，誰就是(子表)（Child）
+      // -------------------------------------------------------------------------------------------
+      // | name                     | 自己表(子表)           | orders    | 建立 `profile_id` 欄位
+      // | referencedColumnName     | 對方表(父表)           | profiles  | 指向 `id` 欄位
+      // | foreignKeyConstraintName | constraint 名稱        | orders    | 外鍵名稱
+      // -------------------------------------------------------------------------------------------
       joinColumn: {
         // 設定 Join 的資料庫欄位
-        name: 'user_id', // 本表對應的欄位名稱 (Order 表的 user_id)
-        referencedColumnName: 'id', // 對方表 (User) 的主鍵欄位名稱
-        foreignKeyConstraintName: 'order_user_id_fk', // 外鍵約束名稱
+        name: 'profile_id', // 外來鍵關聯(FK) (Order 表的 profile_id)
+        referencedColumnName: 'id', // 對方表 (Profile) 的主鍵欄位名稱
+        foreignKeyConstraintName: 'order_profile_id_fk', // 外鍵約束名稱
       },
+      // 雙向關聯 —— 兩邊都必須寫 inverseSide
+      inverseSide: 'orders', // 指向 父表虛擬要連結用的欄位
     },
   },
 })

@@ -48,15 +48,6 @@ npm run clean:port
 "scripts": {
   "clean:port": "npx kill-port 8080"
 }
-
-
-// 🚀 prisma 型別與資料表產生
-// ---
-// 生成 Prisma Client 型別：
-npx prisma generate
-
-// 同步到資料庫（開發階段）：
-npx prisma db push
 ```
 
 > 網址
@@ -79,8 +70,52 @@ http://localhost:8080/todos
 // 測試前端送資料過去 zod驗證
 http://localhost:8080/products
 
-http://127.0.0.1:8080/public/products.html
+http://127.0.0.1:5500/public/products.html
 
+```
+
+> 時間格式
+
+```jsx
+// ==============================
+// Timestamp  ( UTC+0 )
+// ==============================
+Date.now()
+// 型別
+number
+// 範例
+1781245804387（13 位數）毫秒
+
+// 說明
+// 自 1970-01-01T00:00:00.000Z (Unix Epoch)
+// 起算經過的毫秒數
+
+// ==============================
+// Date Object
+// ==============================
+new Date()
+// 型別
+Date (object)
+// 範例
+Fri Jun 12 2026 14:33:53 GMT+0800 (台北標準時間)
+
+// 說明
+// JavaScript 原生日期物件
+// 可進行日期計算、格式轉換等操作
+
+// ==============================
+// ISO 8601 ( UTC+0 )
+// ==============================
+new Date().toISOString()
+// 型別
+string
+// 範例
+"2026-06-12T06:32:21.085Z"
+
+// 說明
+// 國際標準日期時間格式
+// Z = UTC 時區
+// 常用於 API、JSON、資料庫儲存與傳輸
 ```
 
 > 資料庫的位置
@@ -139,6 +174,7 @@ npm install express cors dotenv cross-env bcryptjs jsonwebtoken pg reflect-metad
 npm install -D typescript tsx nodemon tsc-alias pino-pretty @types/node @types/express @types/cors @types/pg @types/bcryptjs @types/jsonwebtoken @types/swagger-jsdoc @types/swagger-ui-express
 ```
 
+
 ```jsx
 "scripts": {
   "dev": "cross-env NODE_ENV=development && nodemon --exec tsx index.ts",
@@ -175,6 +211,7 @@ npm install -D tsc-alias
     "build": "tsc && tsc-alias -p tsconfig.json",
   },
 ```
+
 
 ```jsx
 // ~為啥這專案的路徑 都要寫.js
@@ -236,6 +273,7 @@ CREATE TABLE users (
 #### TypeOrm 注意事項
 
 * 新建立 Schema
+
 ```jsx
 // models/ 新建立 XyyyyySchema.ts
 // ----
@@ -243,4 +281,128 @@ CREATE TABLE users (
 
 import { ProductSchema } from '../models/ProductSchema.js'
 entities: [ UserSchema, OrderSchema, ProfileSchema, ProductSchema ],
+```
+
+
+* 單向/雙向關聯
+> 單向關聯
+
+```jsx
+Order (many-to-one) Profile
+✅ 只寫 many-to-one
+✅ 不需要 inverseSide
+```
+
+```jsx
+OrderSchema (子表):
+relations: {
+  profile: {
+    target: 'Profile',
+    type: 'many-to-one',
+    joinColumn: { name: 'profile_id' }
+    // ❌ 不需要寫 inverseSide
+  }
+}
+```
+
+```jsx
+ProfileSchema (父表):
+// ❌ 保持乾淨，完全不需要寫 relations
+relations: {}
+```
+
+```jsx
+--- 最終產出的 Orders 帶有關聯資料 ---
+[
+  {
+    "id": 1,
+    "amount": 500,
+    "createdAt": 1781501690637,
+    "updatedAt": 1781501690637,
+    "profile_id": 101,
+    "profile": {
+      "id": 101,
+      "name": "Tom"
+    }
+  },
+  {
+    "id": 2,
+    "amount": 300,
+    "createdAt": 1781501690637,
+    "updatedAt": 1781501690637,
+    "profile_id": 102,
+    "profile": {
+      "id": 102,
+      "name": "Mary"
+    }
+  }
+]
+```
+
+
+> 雙向關聯
+
+```jsx
+Order (many-to-one) Profile
+Profile (one-to-many) Orders
+
+✅ 兩邊都定義 relation
+✅ inverseSide 互相指向對方 property 名稱
+```
+
+```jsx
+OrderSchema (子表):
+relations: {
+  profile: {
+    target: 'Profile',
+    type: 'many-to-one',
+    joinColumn: { name: 'profile_id' },
+    inverseSide: 'orders' // 👈 告訴 TypeORM，對方那邊叫 'orders'
+  }
+}
+```
+
+```jsx
+ProfileSchema (父表):
+relations: {
+  orders: { // 👈 對方看過來時，我這裡叫 'orders'
+    target: 'Order',
+    // (反向映射)
+    // 組裝資料時，預設就一定會把它轉成 陣列 []
+    type: 'one-to-many',
+    inverseSide: 'profile' // 👈 告訴 TypeORM，對方那邊叫 'profile'
+  }
+}
+```
+
+```jsx
+--- 反向映射 Profiles ---
+[
+  {
+    "id": 101,
+    "name": "Tom",
+    "orders": [
+      {
+        "id": 1,
+        "amount": 500,
+        "createdAt": 1781501690637,
+        "updatedAt": 1781501690637,
+        "profile_id": 101
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "name": "Mary",
+    "orders": [
+      {
+        "id": 2,
+        "amount": 300,
+        "createdAt": 1781501690637,
+        "updatedAt": 1781501690637,
+        "profile_id": 102
+      }
+    ]
+  }
+]
 ```

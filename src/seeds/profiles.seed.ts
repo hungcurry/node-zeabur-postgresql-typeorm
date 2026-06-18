@@ -1,6 +1,6 @@
 import type { TProfile } from '../models/ProfileSchema.js'
 
 export const mockProfiles: TProfile[] = [
-  { id: 1, name: 'Tom' },
-  { id: 2, name: 'Mary' },
+  { id: 101, name: 'Tom' },
+  { id: 102, name: 'Mary' },
 ]
