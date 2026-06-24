@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm'
 import { seedMockData } from '../seeds/index.js'
 import { getConfig } from './index.js'
+import { getConnectionString } from '../utils/db-utils.js'
 // Schema
 // === 無關連表 ===
 import { UserSchema } from '../models/UserSchema.js'
@@ -13,8 +14,9 @@ import { ProductSchema } from '../models/ProductSchema.js'
 // type
 import type { DataSourceOptions } from 'typeorm'
 
+// 要連的資料庫
+const DATABASE_NAME = getConfig<string>('db.database')
 const DATABASE_URL = getConfig<string>('db.databaseUrl')
-const DEFAULT_DB_NAME: string = 'typeorm' // 要連的資料庫
 let AppDataSource: DataSource
 
 // *所有Entity 註冊清單（AppDataSource 使用）
@@ -35,39 +37,23 @@ const keepEntities = new Set([
   ProductSchema,
 ])
 
-// 沒有mongoose.connect()那種功能,所以封裝 URL 替換邏輯
-const getConnectionString = (dbName: string): string => {
-  if (!DATABASE_URL) return ''
-
-  try {
-    const url = new URL(DATABASE_URL)
-    // 動態修改網址路徑為斜線加上資料庫名稱，例如：/nuxt3
-    url.pathname = `/${dbName}`
-    return url.toString()
-  } catch (error) {
-    console.error('DATABASE_URL 格式錯誤，無法解析：', error)
-    return DATABASE_URL // 若解析失敗，安全降級回原本的 URL
-  }
-}
 // 動態建立 TypeORM 配置物件的函式
-const createDbOptions = (dbName: string): DataSourceOptions => {
-  // 檢查 DATABASE_URL 是否有值（不是空字串，也不是 undefined/null）
-  const isCloudMode = DATABASE_URL !== undefined && DATABASE_URL !== ''
-
+const createDbOptions = (isLocalMode: boolean): DataSourceOptions => {
   return {
     type: 'postgres',
 
     // 💡 關鍵商業邏輯：優先檢查有沒有
-    // DATABASE_URL 有字串 => （Zeabur 環境）
-    // DATABASE_URL 空值 => （本機docker 環境）
-    ...(isCloudMode
-      ? { url: getConnectionString(dbName) }
-      : {
+    // DATABASE_URL 有localhost
+    ...(isLocalMode
+      ? {
           host: process.env.DB_HOST || 'localhost',
           port: parseInt(process.env.DB_PORT || '5432', 10),
           username: process.env.DB_USERNAME || 'testCurryLee',
           password: process.env.DB_PASSWORD || 'password1234',
           database: process.env.DB_DATABASE || 'typeorm',
+        }
+      : {
+          url: getConnectionString(DATABASE_URL, DATABASE_NAME),
         }),
 
     // 【設計取捨說明】
@@ -92,19 +78,31 @@ const createDbOptions = (dbName: string): DataSourceOptions => {
     },
   }
 }
-const connectDB = async (dbName: string = DEFAULT_DB_NAME) => {
-  // 檢查 DATABASE_URL 是否有值（不是空字串，也不是 undefined/null）
-  const isCloudMode = DATABASE_URL !== undefined && DATABASE_URL !== ''
-  console.log(isCloudMode ? '資料庫模式：雲端 PostgreSQL' : '資料庫模式：本地 Docker PostgreSQL')
+const connectDB = async () => {
+  // 攔截 AppDataSource 避免重複建立
+  if (AppDataSource) return AppDataSource
+  if (!DATABASE_URL) {
+    console.error('❌ DATABASE_URL 未設定')
+    process.exit(1)
+  }
+  if (!DATABASE_NAME) {
+    console.error('❌ 沒有指定資料庫名稱')
+    process.exit(1)
+  }
+
+  const parsedUrl = new URL(DATABASE_URL)
+  const host = parsedUrl.hostname
+  const isLocalMode = host === 'localhost' || host === '127.0.0.1'
+  console.log(isLocalMode ? '資料庫模式：本地 Docker PostgreSQL' : '資料庫模式：雲端 PostgreSQL')
 
   // 建立連線池
   try {
-    const dbOptions = createDbOptions(dbName)
+    const dbOptions = createDbOptions(isLocalMode)
     AppDataSource = new DataSource(dbOptions)
 
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize()
-      console.log(`運作順利：PostgreSQL 資料庫 [${dbName}] 連線成功！`)
+      console.log(`運作順利：PostgreSQL 資料庫 [${DATABASE_NAME}] 連線成功！`)
     }
 
     // 2. 連線成功後，開發環境 建立假資料
@@ -113,7 +111,8 @@ const connectDB = async (dbName: string = DEFAULT_DB_NAME) => {
     }
 
     return AppDataSource
-  } catch (error) {
+  } 
+  catch (error) {
     console.error('資料庫連線失敗：', error)
     process.exit(1) // 實務專案中，連線失敗通常需中止服務
   }
