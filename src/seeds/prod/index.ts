@@ -14,55 +14,61 @@ export async function seedProdData() {
   // 啟動後，接下來所有的寫入/刪除操作都會進入「臨時沙盒」，先不對硬碟做真實改動
   await queryRunner.startTransaction()
 
-try {
-    // 💡 1. 嚴格守護沙盒，必須用 queryRunner 提供的 manager
+  try {
+    // 必須用 queryRunner 提供的 manager，才能把操作鎖定在同一個 Transaction 內
     const manager = queryRunner.manager
-
     console.log('🚀 [Prod-Seeder] 開始同步正式環境預設資料...')
     console.log('📦 [Prod-Seeder] 檢查 productionUsers 原始資料:', JSON.stringify(productionUsers))
 
-    if (!productionUsers || productionUsers.length === 0) {
-      console.log('⚠️ [Prod-Seeder] 警告：偵測到 productionUsers 為空，跳過執行。')
-      await queryRunner.rollbackTransaction()
-      return
-    }
+    // 自動取得所有要更新的欄位
+    // 排除主鍵 id，避免更新主鍵
+    const updateColumns = Object.keys(productionUsers[0]!).filter((column) => column !== 'id')
+    // console.log(`updateColumns`, updateColumns)
+    // updateColumns [ 'name', 'age', 'role' ]
 
-    // 嚴格定義要更新的欄位
-    const updateColumns = ['name', 'age', 'role']
-
-    // 執行 Upsert
+    // Upsert：
+    // - id 不存在 → INSERT
+    // - id 已存在 → UPDATE updateColumns 指定的欄位
     await manager
       .createQueryBuilder()
       .insert()
-      .into(UserSchema)
-      .values(productionUsers)
-      .orUpdate(updateColumns, ['id'])
+      .into(UserSchema) // INSERT INTO users ...
+      .values(productionUsers) // INSERT INTO users (id, name, age, role) VALUES (...)
+      .orUpdate(updateColumns, ['id']) // 如果 id 衝突（已存在），就更新這些欄位
       .execute()
 
-    console.log('📝 [Prod-Seeder] 資料庫 Upsert 執行成功')
-
-    // ==========================================
-    // 驗證最終資料 【保留沙盒，但修正雲端型別轉換】
-    // ==========================================
-    const targetIds = productionUsers.map((user) => user.id).filter(Boolean) as string[]
-
-    // 💡 關鍵修正：改用 QueryBuilder，並使用內建的 :... 語法，
-    // 且在 SQL 裡面強制加上 ::uuid 轉型，確保雲端 Postgres 能正確比對！
-    const currentProdUsers = await manager
-      .createQueryBuilder(UserSchema, 'user')
-      .where('user.id IN (:...targetIds)', { targetIds })
-      .getMany()
-
-    console.log('\n--- 正式環境 預設資料 (Transaction 內確認) ---')
-    console.log(JSON.stringify(currentProdUsers, null, 2))
-
-    // 驗證完美無誤後，正式提交
+    // 走到這一步代表以上所有 save 都完美無誤，
+    // 正式通知資料庫：「把剛才沙盒裡的內容一次性寫入硬碟！」
     await queryRunner.commitTransaction()
     console.log('✨ [Prod-Seeder] 預設資料同步成功！')
-  } catch (error) {
-    console.error('❌ [Prod-Seeder] 發生錯誤，執行 Rollback：', error)
+
+    // ==========================================
+    // 驗證最終資料
+    // ==========================================
+    // getRepository 是繼承自 TypeORM DataSource 類別的原生方法
+    // (父表) userRepository只是連線操作器,沒有資料
+    const userRepository = AppDataSource.getRepository(UserSchema)
+
+    const currentProdUsers = await userRepository.find({
+      // [
+      //   { id: "A" },
+      //   { id: "B" }
+      // ]
+      // 解析 WHERE id IN ('A', 'B')
+      where: {
+        id: In(productionUsers.map((user) => user.id)),
+      },
+    })
+
+    console.log('\n--- 正式環境 預設資料 ---')
+    console.log(JSON.stringify(currentProdUsers, null, 2))
+  } 
+  catch (error) {
+    // 中間只要任何一個步驟噴錯（不論是寫入失敗、格式不對或網路斷線），就會立刻跳到這裡。
+    // 告訴資料庫：「剛剛臨時沙盒裡的紀錄全部撕掉，裝作沒發生過！」確保資料庫不會留下半殘的髒資料。
     await queryRunner.rollbackTransaction()
-  }
+    console.error('⚠️ [Seeder] 執行失敗，錯誤原因:', error)
+  } 
   finally {
     // 不論最後是成功 (try) 還是失敗 (catch)，都必須關閉 queryRunner 的專屬連線，
     // 把資源還給連線池 (Connection Pool)
