@@ -137,6 +137,9 @@ const connectDB = async () => {
 
     // production
     if (process.env.NODE_ENV === 'production') {
+      // 使用 migration再開啟
+      await AppDataSource.runMigrations()
+
       // 連線成功後，正式環境 建立種子資料
       await seedProdData()
     }
