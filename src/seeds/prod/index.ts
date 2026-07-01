@@ -49,12 +49,15 @@ export async function seedProdData() {
     // ==========================================
     // 驗證最終資料 【移到 commit 之前，並改用 manager 查詢】
     // ==========================================
-    const targetIds = productionUsers.map((user) => user.id).filter(Boolean)
-    const currentProdUsers = await manager.find(UserSchema, {
-      where: {
-        id: In(targetIds),
-      },
-    })
+    // 1. 提取 ID 並強制轉小寫，避免雲端 PostgreSQL UUID 大小寫比對嚴格而落空
+    const targetIds = productionUsers.map((user) => user.id?.toLowerCase()).filter(Boolean) as string[]
+
+    // 2. 改用 QueryBuilder 進行 IN 查詢
+    // 這樣可以強迫 TypeORM 在雲端環境（Zeabur）也精準生成原生 SQL 參數綁定
+    const currentProdUsers = await manager
+      .createQueryBuilder(UserSchema, 'user')
+      .where('user.id IN (:...targetIds)', { targetIds })
+      .getMany()
 
     console.log('\n--- 正式環境 預設資料 (Transaction 內確認) ---')
     console.log(JSON.stringify(currentProdUsers, null, 2))
