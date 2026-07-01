@@ -26,27 +26,19 @@ export async function seedProdData() {
       return
     }
 
-    // 💡 嚴格限制更新欄位，且必須完全符合 UserSchema 中的屬性名稱
-    const updateColumns: string[] = ['name', 'age', 'role']
+    // 💡 【核心修正】棄用 createQueryBuilder().insert() 這種會讓快取失效的寫法
+    // 改用 manager.save()，它會自動處理 PostgreSQL 的 Upsert，並同步 Transaction 快取
+    // 同時將實體類別傳入，確保型別安全不使用 any
+    await manager.save(UserSchema, productionUsers)
 
-    // 💡 修正：使用 TypeORM 官方標準且型別完全支援的雙陣列寫法
-    await manager
-      .createQueryBuilder()
-      .insert()
-      .into(UserSchema)
-      .values(productionUsers)
-      .orUpdate(updateColumns, ['id']) // 第一個參數是更新欄位，第二個是衝突的主鍵
-      .execute()
-
-    console.log('📝 [Prod-Seeder] 資料庫 Upsert 執行成功')
+    console.log('📝 [Prod-Seeder] 資料庫 manager.save (Upsert) 執行成功')
 
     // ==========================================
     // 驗證最終資料
     // ==========================================
     const targetIds = productionUsers.map((user) => user.id?.toLowerCase()).filter(Boolean) as string[]
 
-    // 💡 既然前面 Transaction 會被 Aborted，代表可能資料根本沒對齊。
-    // 我們改用最乾淨的 QueryBuilder 重新查詢：
+    // 💡 這裡一樣用 QueryBuilder 查，強迫它繞過任何潛在的快取，直接去戳 DB 實體表
     const currentProdUsers = await manager
       .createQueryBuilder(UserSchema, 'user')
       .where('user.id IN (:...targetIds)', { targetIds })
@@ -59,7 +51,6 @@ export async function seedProdData() {
     console.log('✨ [Prod-Seeder] 預設資料同步成功！')
   } 
   catch (error) {
-    // 💡 這裡非常關鍵！只要出錯立刻 Rollback，並把最原始的錯誤完整印出來
     console.error('❌ [Prod-Seeder] 發生錯誤，執行 Rollback：', error)
     await queryRunner.rollbackTransaction()
   } 
