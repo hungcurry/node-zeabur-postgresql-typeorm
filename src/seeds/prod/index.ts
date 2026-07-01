@@ -46,17 +46,25 @@ export async function seedProdData() {
     // ==========================================
     const targetIds = productionUsers.map((user) => user.id).filter(Boolean) as string[]
 
-    // 💡 關鍵排查：直接全表掃描，看看到底是有資料但查不到，還是根本沒塞進去！
-    const debugAllUsers = await manager.find(UserSchema)
-    console.log('\n--- 🔍 [Debug] 目前資料表內的全部資料 ---')
-    console.log(JSON.stringify(debugAllUsers, null, 2))
+    // 💡 做法 A：用最底層的 PostgreSQL 原生 SQL 直接查（這絕對不會被 TypeORM 策略干擾）
+    // 請注意你的表名（UserSchema）。如果資料庫內是小寫 user，就用 "user"
+    const rawResult = await manager
+      .query(`SELECT * FROM "user" WHERE id ANY($1::uuid[])`, [targetIds])
+      .catch(async () => {
+        // 預防萬一你的表名是複數或大寫，做個備用相容
+        return await manager.query(`SELECT * FROM users WHERE id = ANY($1::uuid[])`, [targetIds])
+      })
 
+    console.log('\n--- 🎯 [原生 SQL 查詢結果] (Transaction 內確認) ---')
+    console.log(JSON.stringify(rawResult, null, 2))
+
+    // 💡 做法 B：原有的 QueryBuilder 留著對比
     const currentProdUsers = await manager
       .createQueryBuilder(UserSchema, 'user')
       .where('user.id IN (:...targetIds)', { targetIds })
       .getMany()
 
-    console.log('\n--- 正式環境 預設資料 (Transaction 內確認) ---')
+    console.log('\n--- 🧩 [TypeORM QueryBuilder 結果] ---')
     console.log(JSON.stringify(currentProdUsers, null, 2))
 
     await queryRunner.commitTransaction()
