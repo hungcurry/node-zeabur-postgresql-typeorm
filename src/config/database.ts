@@ -89,7 +89,7 @@ const createDbOptions = (): DataSourceOptions => {
     // Migration 檔案位置（供 TypeORM CLI 執行 migration 使用）
     migrations: [
       process.env.NODE_ENV === 'production'
-        ? 'dist/migrations/*.js' // 雲端：讀取編譯後的 JS 檔案
+        ? 'dist/src/migrations/*.js' // 雲端：讀取編譯後的 JS 檔案
         : 'src/migrations/*.{ts,js}', // 本地：讀取開發中的 TS/JS 檔案
     ],
 
@@ -136,7 +136,7 @@ const connectDB = async () => {
     }
 
     // production
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'production') {
       // 使用 migration再開啟
       await AppDataSource.runMigrations()
 
