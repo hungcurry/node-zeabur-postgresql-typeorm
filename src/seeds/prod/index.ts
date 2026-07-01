@@ -26,55 +26,42 @@ export async function seedProdData() {
       return
     }
 
-    // 💡 確保欄位名稱完全貼合資料庫
-    const updateColumns = ['name', 'age', 'role']
+    // 💡 嚴格限制更新欄位，且必須完全符合 UserSchema 中的屬性名稱
+    const updateColumns: string[] = ['name', 'age', 'role']
 
-    const result = await manager
+    // 💡 修正：使用 TypeORM 官方標準且型別完全支援的雙陣列寫法
+    await manager
       .createQueryBuilder()
       .insert()
       .into(UserSchema)
       .values(productionUsers)
-      .orUpdate(updateColumns, ['id'])
+      .orUpdate(updateColumns, ['id']) // 第一個參數是更新欄位，第二個是衝突的主鍵
       .execute()
 
-    // 💡 修正後的 Log 寫法
-    console.log('📝 [Prod-Seeder] Upsert raw 影響列數:', result.raw?.length)
-    console.log('📝 [Prod-Seeder] 資料庫 Upsert 執行結果 identifiers:', JSON.stringify(result.identifiers))
+    console.log('📝 [Prod-Seeder] 資料庫 Upsert 執行成功')
 
     // ==========================================
     // 驗證最終資料
     // ==========================================
-    const targetIds = productionUsers.map((user) => user.id).filter(Boolean) as string[]
+    const targetIds = productionUsers.map((user) => user.id?.toLowerCase()).filter(Boolean) as string[]
 
-    // 💡 做法 A：用最底層的 PostgreSQL 原生 SQL 直接查（這絕對不會被 TypeORM 策略干擾）
-    // 請注意你的表名（UserSchema）。如果資料庫內是小寫 user，就用 "user"
-    const rawResult = await manager
-      .query(`SELECT * FROM "user" WHERE id ANY($1::uuid[])`, [targetIds])
-      .catch(async () => {
-        // 預防萬一你的表名是複數或大寫，做個備用相容
-        return await manager.query(`SELECT * FROM users WHERE id = ANY($1::uuid[])`, [targetIds])
-      })
-
-    console.log('\n--- 🎯 [原生 SQL 查詢結果] (Transaction 內確認) ---')
-    console.log(JSON.stringify(rawResult, null, 2))
-
-    // 💡 做法 B：原有的 QueryBuilder 留著對比
+    // 💡 既然前面 Transaction 會被 Aborted，代表可能資料根本沒對齊。
+    // 我們改用最乾淨的 QueryBuilder 重新查詢：
     const currentProdUsers = await manager
       .createQueryBuilder(UserSchema, 'user')
       .where('user.id IN (:...targetIds)', { targetIds })
       .getMany()
 
-    console.log('\n--- 🧩 [TypeORM QueryBuilder 結果] ---')
+    console.log('\n--- 正式環境 預設資料 (Transaction 內確認) ---')
     console.log(JSON.stringify(currentProdUsers, null, 2))
 
     await queryRunner.commitTransaction()
     console.log('✨ [Prod-Seeder] 預設資料同步成功！')
   } 
   catch (error) {
-    // 中間只要任何一個步驟噴錯（不論是寫入失敗、格式不對或網路斷線），就會立刻跳到這裡。
-    // 告訴資料庫：「剛剛臨時沙盒裡的紀錄全部撕掉，裝作沒發生過！」確保資料庫不會留下半殘的髒資料。
+    // 💡 這裡非常關鍵！只要出錯立刻 Rollback，並把最原始的錯誤完整印出來
+    console.error('❌ [Prod-Seeder] 發生錯誤，執行 Rollback：', error)
     await queryRunner.rollbackTransaction()
-    console.error('⚠️ [Seeder] 執行失敗，錯誤原因:', error)
   } 
   finally {
     // 不論最後是成功 (try) 還是失敗 (catch)，都必須關閉 queryRunner 的專屬連線，
