@@ -15,10 +15,8 @@ export async function seedProdData() {
   await queryRunner.startTransaction()
 
   try {
-    // 必須用 queryRunner 提供的 manager，才能把操作鎖定在同一個 Transaction 內
     const manager = queryRunner.manager
 
-    // 🔍 【新增排查 1】在最開頭檢查 Zeabur 到底有沒有讀到 Seed 資料，還是讀到空陣列
     console.log('🚀 [Prod-Seeder] 開始同步正式環境預設資料...')
     console.log('📦 [Prod-Seeder] 檢查 productionUsers 原始資料:', JSON.stringify(productionUsers))
 
@@ -28,13 +26,9 @@ export async function seedProdData() {
       return
     }
 
-    // 自動取得所有要更新的欄位
-    // 排除主鍵 id，避免更新主鍵
-    const updateColumns = Object.keys(productionUsers[0]!).filter((column) => column !== 'id')
+    // 💡 確保欄位名稱完全貼合資料庫
+    const updateColumns = ['name', 'age', 'role']
 
-    // Upsert：
-    // - id 不存在 → INSERT
-    // - id 已存在 → UPDATE updateColumns 指定的欄位
     const result = await manager
       .createQueryBuilder()
       .insert()
@@ -43,17 +37,20 @@ export async function seedProdData() {
       .orUpdate(updateColumns, ['id'])
       .execute()
 
-    // 🔍 【修正排查 2】檢查資料庫回傳的主鍵識別碼
+    // 💡 修正後的 Log 寫法
+    console.log('📝 [Prod-Seeder] Upsert raw 影響列數:', result.raw?.length)
     console.log('📝 [Prod-Seeder] 資料庫 Upsert 執行結果 identifiers:', JSON.stringify(result.identifiers))
 
     // ==========================================
-    // 驗證最終資料 【移到 commit 之前，並改用 manager 查詢】
+    // 驗證最終資料
     // ==========================================
-    // 1. 提取 ID 並強制轉小寫，避免雲端 PostgreSQL UUID 大小寫比對嚴格而落空
-    const targetIds = productionUsers.map((user) => user.id?.toLowerCase()).filter(Boolean) as string[]
+    const targetIds = productionUsers.map((user) => user.id).filter(Boolean) as string[]
 
-    // 2. 改用 QueryBuilder 進行 IN 查詢
-    // 這樣可以強迫 TypeORM 在雲端環境（Zeabur）也精準生成原生 SQL 參數綁定
+    // 💡 關鍵排查：直接全表掃描，看看到底是有資料但查不到，還是根本沒塞進去！
+    const debugAllUsers = await manager.find(UserSchema)
+    console.log('\n--- 🔍 [Debug] 目前資料表內的全部資料 ---')
+    console.log(JSON.stringify(debugAllUsers, null, 2))
+
     const currentProdUsers = await manager
       .createQueryBuilder(UserSchema, 'user')
       .where('user.id IN (:...targetIds)', { targetIds })
@@ -62,8 +59,6 @@ export async function seedProdData() {
     console.log('\n--- 正式環境 預設資料 (Transaction 內確認) ---')
     console.log(JSON.stringify(currentProdUsers, null, 2))
 
-    // 走到這一步代表以上所有 save 與驗證都完美無誤，
-    // 正式通知資料庫：「把剛才沙盒裡的內容一次性寫入硬碟！」
     await queryRunner.commitTransaction()
     console.log('✨ [Prod-Seeder] 預設資料同步成功！')
   } 
