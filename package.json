@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon --exec tsx index.ts",
     "build": "tsc && tsc-alias -p tsconfig.json",
-    "typeorm:prod": "node ./node_modules/typeorm/cli.js -d ./dist/config/database.js",
+    "typeorm:prod": "node ./node_modules/typeorm/cli.js -d ./dist/src/config/database.js",
     "migration:run:prod": "npm run typeorm:prod -- migration:run",
     "prestart": "cross-env NODE_ENV=production npm run migration:run:prod",
     "start": "cross-env NODE_ENV=production node dist/index.js",
