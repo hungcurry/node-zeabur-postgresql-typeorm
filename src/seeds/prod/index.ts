@@ -17,50 +17,52 @@ export async function seedProdData() {
   try {
     // 必須用 queryRunner 提供的 manager，才能把操作鎖定在同一個 Transaction 內
     const manager = queryRunner.manager
+
+    // 🔍 【新增排查 1】在最開頭檢查 Zeabur 到底有沒有讀到 Seed 資料，還是讀到空陣列
     console.log('🚀 [Prod-Seeder] 開始同步正式環境預設資料...')
+    console.log('📦 [Prod-Seeder] 檢查 productionUsers 原始資料:', JSON.stringify(productionUsers))
+
+    if (!productionUsers || productionUsers.length === 0) {
+      console.log('⚠️ [Prod-Seeder] 警告：偵測到 productionUsers 為空，跳過執行。')
+      await queryRunner.rollbackTransaction()
+      return
+    }
 
     // 自動取得所有要更新的欄位
     // 排除主鍵 id，避免更新主鍵
     const updateColumns = Object.keys(productionUsers[0]!).filter((column) => column !== 'id')
-    // console.log(`updateColumns`, updateColumns)
-    // updateColumns [ 'name', 'age', 'role' ]
 
     // Upsert：
     // - id 不存在 → INSERT
     // - id 已存在 → UPDATE updateColumns 指定的欄位
-    await manager
+    const result = await manager
       .createQueryBuilder()
       .insert()
-      .into(UserSchema) // INSERT INTO users ...
-      .values(productionUsers) // INSERT INTO users (id, name, age, role) VALUES (...)
-      .orUpdate(updateColumns, ['id']) // 如果 id 衝突（已存在），就更新這些欄位
+      .into(UserSchema)
+      .values(productionUsers)
+      .orUpdate(updateColumns, ['id'])
       .execute()
 
-    // 走到這一步代表以上所有 save 都完美無誤，
-    // 正式通知資料庫：「把剛才沙盒裡的內容一次性寫入硬碟！」
-    await queryRunner.commitTransaction()
-    console.log('✨ [Prod-Seeder] 預設資料同步成功！')
+    // 🔍 【修正排查 2】檢查資料庫回傳的主鍵識別碼
+    console.log('📝 [Prod-Seeder] 資料庫 Upsert 執行結果 identifiers:', JSON.stringify(result.identifiers))
 
     // ==========================================
-    // 驗證最終資料
+    // 驗證最終資料 【移到 commit 之前，並改用 manager 查詢】
     // ==========================================
-    // getRepository 是繼承自 TypeORM DataSource 類別的原生方法
-    // (父表) userRepository只是連線操作器,沒有資料
-    const userRepository = AppDataSource.getRepository(UserSchema)
-
-    const currentProdUsers = await userRepository.find({
-      // [
-      //   { id: "A" },
-      //   { id: "B" }
-      // ]
-      // 解析 WHERE id IN ('A', 'B')
+    const targetIds = productionUsers.map((user) => user.id).filter(Boolean)
+    const currentProdUsers = await manager.find(UserSchema, {
       where: {
-        id: In(productionUsers.map((user) => user.id)),
+        id: In(targetIds),
       },
     })
 
-    console.log('\n--- 正式環境 預設資料 ---')
+    console.log('\n--- 正式環境 預設資料 (Transaction 內確認) ---')
     console.log(JSON.stringify(currentProdUsers, null, 2))
+
+    // 走到這一步代表以上所有 save 與驗證都完美無誤，
+    // 正式通知資料庫：「把剛才沙盒裡的內容一次性寫入硬碟！」
+    await queryRunner.commitTransaction()
+    console.log('✨ [Prod-Seeder] 預設資料同步成功！')
   } 
   catch (error) {
     // 中間只要任何一個步驟噴錯（不論是寫入失敗、格式不對或網路斷線），就會立刻跳到這裡。
