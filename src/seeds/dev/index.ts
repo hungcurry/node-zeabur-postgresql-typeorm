@@ -1,10 +1,10 @@
 // import { DataSource } from 'typeorm'
-import { AppDataSource, dbEntities, keepEntities } from '../config/database.js'
+import { AppDataSource, dbEntities, keepEntities } from '@/config/database.js'
 // Schema
-import { ProfileSchema } from '../models/ProfileSchema.js'
+import { ProfileSchema } from '@/models/ProfileSchema.js'
 import { CategorySchema } from '@/models/CategorySchema.js'
 // === 子表 (從表) ===
-import { OrderSchema } from '../models/OrderSchema.js'
+import { OrderSchema } from '@/models/OrderSchema.js'
 import { ProductSchema } from '@/models/ProductSchema.js'
 // mock 假資料
 import { mockProfiles } from './profiles.seed.js'

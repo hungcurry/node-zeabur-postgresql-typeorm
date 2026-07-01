@@ -1,4 +1,4 @@
-import { getConfig } from '../config/index.js'
+import { getConfig } from '../config/env/index.js'
 // type
 import type { Request, Response, NextFunction } from 'express'
 import type { ApiResponse } from '../type/index.js'

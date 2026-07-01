@@ -2,7 +2,7 @@ import 'dotenv/config' // 確保第一行加載環境變數
 import app from './src/app.js'
 import { connectDB } from './src/config/database.js'
 
-import { getConfig } from './src/config/index.js'
+import { getConfig } from './src/config/env/index.js'
 const PORT = getConfig<number>('db.port') || 3000
 
 async function startServer() {

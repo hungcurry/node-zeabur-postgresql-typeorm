@@ -8,6 +8,7 @@ export type TUser = {
   age: number
   name: string
   role: string
+  // email: string
 }
 
 // ==============================
@@ -43,5 +44,9 @@ export const UserSchema = new EntitySchema<TUser>({
       length: 255,
       nullable: true,
     },
+    // email: {
+    //   type: 'varchar',
+    //   nullable: true,
+    // },
   },
 })

@@ -2,7 +2,7 @@
 // ~npm install --save-dev @types/jsonwebtoken
 
 import jwt from 'jsonwebtoken'
-import { getConfig } from '@/config/index.js'
+import { getConfig } from '@/config/env/index.js'
 import type { SignOptions } from 'jsonwebtoken'
 import type { TTokenPayload } from '@/type/index.js'
 

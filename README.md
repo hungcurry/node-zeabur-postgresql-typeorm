@@ -1,3 +1,5 @@
+## 專案快速啟動
+
 #### node-zeabur-postgresql-typeorm
 
 > 指令
@@ -405,4 +407,242 @@ relations: {
     ]
   }
 ]
+```
+
+
+#### Migration 
+
+> 指令
+
+```jsx
+// TypeORM 的 Migration
+npm install typeorm pg
+npm install -D typescript tsx @types/node @types/pg
+
+// 希望維持原本簡短的 --name=AddEmailToUser，
+// 那最好的跨平台方案就是藉由 cross-var 
+// 這個 npm 套件來抹平作業系統的差異
+npm install --save-dev cross-var
+// npm run migration:generate --name=AddEmailToUser
+```
+
+
+```jsx
+"scripts": {
+  "dev": "cross-env NODE_ENV=development nodemon --exec tsx index.ts",
+  "build": "tsc && tsc-alias -p tsconfig.json",
+  // 雲端部屬 會先跑 prestart + start
+  "prestart": "cross-env NODE_ENV=production npm run migration:run",
+  "start": "cross-env NODE_ENV=production node dist/index.js",
+  "clean:port": "npx kill-port 8080",
+  // migration 指令
+  "typeorm": "tsx ./node_modules/typeorm/cli.js -d ./src/config/database.ts",
+  "migration:generate": "cross-var npm run typeorm -- migration:generate src/migrations/$npm_config_name",
+  "migration:run": "npm run typeorm -- migration:run",
+  "migration:revert": "npm run typeorm -- migration:revert",
+  "migration:show": "npm run typeorm -- migration:show"
+},
+🟢 開發時（你在本機改 schema）
+// migration:generate 👉 建立 Migration 檔，不套用到資料庫
+// migration:run 👉 建立並套用 Migration（開發環境）
+// migration:show 👉 看資料庫目前 migration 狀態
+// migration:revert 👉 回滾上一個 migration（本機除錯用）
+🔵 部署時（雲端 / production）
+// migration:run 👉 把「推上來的 未執行的 migration」全部套用
+```
+
+
+> 開發流（Workflow）
+
+1. 本地開發開發
+```jsx
+本地開發：直接改 Entity，因為
+synchronize 是 true，
+// synchronize: process.env.NODE_ENV === 'development',
+本機資料庫自動隨你變更。
+```
+
+
+2. 初始化Migration
+```jsx
+確保設定檔中 synchronize: false
+```
+
+
+3. 清空資料庫
+```jsx
+清空並「立刻重啟」資料庫（關鍵順序）
+我們要讓資料庫變成全空，但必須是開著的
+
+先 ctrl +c 關閉專案
+
+// 徹底砍掉舊資料庫與數據卷
+docker compose down -v
+// 立刻啟動一個「全新、全空」的資料庫
+docker compose up -d
+```
+
+
+4. 初始化 對著「空資料庫」拍快照
+```jsx
+1. 建立藍圖
+npm run migration:generate --name=InitProject
+// TypeORM 連進去剛剛啟動的 Docker，發現裡面什麼表都沒有（因為剛才重啟清空了），
+// 對比你的 Entity 程式碼，就會把所有建表語法打包，
+// 成功在 src/migrations/ 資料夾下產生 InitProject 檔案
+
+2. 打開 ./src/migrations/ 下
+剛生成的 xxxx-自訂名稱.ts 檔案
+// up：升級資料庫結構（正式環境會跑這個）
+// down：還原資料庫結構（跑 migration:revert 時會跑這個）
+
+3. node執行序,會報錯誤 產生檔案 加上 type
+import type { MigrationInterface, QueryRunner } from "typeorm"
+
+4. 將藍圖 實際建立到資料庫
+// 檢查欄位 有沒建立好
+npm run migration:run
+```
+
+
+5. 檢查與大功告成
+```jsx
+database.ts 程式碼中的  
+打開 await AppDataSource.runMigrations() 
+就會把剛剛拍好的快照倒進去這個空資料庫，
+之後伺服器重新啟動 都會更新資料夾
+// 等同於 npm run migration:run
+// 之後重新整理 就跑段這個就好
+// 自動~將藍圖寫入資料庫
+
+// 重新啟動 假資料灌入
+npm run dev 
+```
+
+
+6. Zeabur雲端
+```jsx
+推送上雲：git push 到 GitHub。
+Zeabur 接手： 雲端執行：Zeabur 執行新設定的 start 指令
+先幫你跑了 migration:run（比對簽到表，只更新新欄位），接著網站順利啟動！
+{
+  "scripts": {
+    // 👇 prestart / start 指令
+    "prestart": "cross-env NODE_ENV=production npm run migration:run",
+    "start": "cross-env NODE_ENV=production node dist/index.js",
+    "migration:run": "npm run typeorm -- migration:run",
+  }
+}
+```
+
+
+7. 之後重複版控
+```jsx
+修改 UserSchema.ts 增加欄位（例如新增 email）
+
+// 1. 開始使用migration
+synchronize: false
+
+// 2. 建立藍圖
+npm run migration:generate --name=AddEmailToUser
+
+// 3.node執行序,會報錯誤 產生檔案 加上 type
+import type { MigrationInterface, QueryRunner } from "typeorm"
+
+// 4. 實際施工資料庫(更新本地資料庫)
+// * 如果 database.ts 有設定 await AppDataSource.runMigrations()
+// 這行之後 就不需要自己手動一直打
+npm run migration:run
+
+// 5.推送雲端專案
+"prestart": "cross-env NODE_ENV=production npm run migration:run",
+"start": "cross-env NODE_ENV=production node dist/index.js",
+
+
+// 6. 反悔 剛剛新增email欄位
+🟢 方法一: 重新打 一個 migration
+// 類似用commit 去取消 上一個commit
+// 把 UserSchema.ts email 欄位刪除
+1. 刪除掉 UserSchema.ts 的 email 欄位
+2. npm run migration:generate --name=RemoveEmailToUser
+3. npm run migration:run
+
+🟢 (推薦)方法二: 刪除掉 migrations/AddEmailToUser
+// 不想一直跑migration 讓檔案一直增加 
+1. ctrl + c 停用伺服器
+2. 刪除掉 UserSchema.ts 的 email 欄位
+3. 先確認目前狀態
+   npm run migration:show
+
+4. 回滾上一次執行的 migration
+   呈現 [ ] AddEmailToUser（已完成）
+   代表 沒執行過,這時候去看 確認資料庫是否回滾更新了
+   資料庫會有一張表 migrations
+   npm run migration:revert
+   
+5. 刪除掉本機 /src/migrations/AddEmailToUser*.ts
+6. 啟動專案：執行 npm run dev
+```
+
+
+8. 流程圖
+```jsx
+      ┌────────────────────────┐
+      │  修改 Entity (Schema)   │
+      └───────────┬────────────┘
+                  │
+                  ▼
+      ┌────────────────────────┐
+      │ npm run migration:gen  │ ◄── (手動畫出施工藍圖 .ts)
+      └───────────┬────────────┘
+                  │
+                  ▼
+  ====================================
+  【 階段一：本地開發環境 (Development) 】
+  ====================================
+                  │
+                  ▼
+      ┌────────────────────────┐
+      │   npm run dev 啟動專案  │
+      └───────────┬────────────┘
+                  │
+                  ▼
+      ┌────────────────────────┐
+      │ AppDataSource.runMigrations() 
+      │  (本地開機：自動讀藍圖施工)  │
+      └───────────┬────────────┘
+                  │
+                  ▼
+      ┌────────────────────────┐
+      │     seedMockData()     │
+      │ (每次重置，塞入測試假資料)│
+      └───────────┬────────────┘
+                  │
+                  │  ( 測試都 OK 了，準備上線！ )
+                  ▼
+      ┌────────────────────────┐
+      │      Git Push 🚀       │ ◄── (這時候才把藍圖推上去)
+      └───────────┬────────────┘
+                  │
+                  ▼
+  ====================================
+  【 階段二：雲端生產環境 (Production) 】
+  ====================================
+                  │
+                  ▼
+      ┌────────────────────────┐
+      │  Zeabur 部署 (prestart) │
+      └───────────┬────────────┘
+                  │
+                  ▼
+      ┌────────────────────────┐
+      │  npm run migration:run  │
+      │  (雲端開機：自動讀藍圖施工)  │
+      └───────────┬────────────┘
+                  │
+                  ▼
+      ┌────────────────────────┐
+      │  seedProductionData()
+      │ (絕不重置！安全補齊預設資料)│
+      └────────────────────────┘
 ```
