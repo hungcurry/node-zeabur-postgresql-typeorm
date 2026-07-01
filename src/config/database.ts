@@ -1,5 +1,4 @@
 import { DataSource } from 'typeorm'
-import { join } from 'path'
 import { getConfig } from './env/index.js'
 import { getConnectionString } from '../utils/db-utils.js'
 // Schema
@@ -90,9 +89,10 @@ const createDbOptions = (): DataSourceOptions => {
     // Migration 檔案位置（供 TypeORM CLI 執行 migration 使用）
     migrations: [
       process.env.NODE_ENV === 'production'
-        ? join(__dirname, '../migrations/**/*.js') // 使用絕對路徑定向到編譯後的 js
-        : join(process.cwd(), 'src/migrations/**/*.{ts,js}'),
+        ? 'dist/migrations/*.js' // 雲端：讀取編譯後的 JS 檔案
+        : 'src/migrations/*.{ts,js}', // 本地：讀取開發中的 TS/JS 檔案
     ],
+
     // 連線池優化設定（正式環境尤為重要）
     extra: {
       max: 10, // 最大連線數
