@@ -14,7 +14,8 @@ export async function seedProdData() {
   // 啟動後，接下來所有的寫入/刪除操作都會進入「臨時沙盒」，先不對硬碟做真實改動
   await queryRunner.startTransaction()
 
-  try {
+try {
+    // 💡 1. 嚴格守護沙盒，必須用 queryRunner 提供的 manager
     const manager = queryRunner.manager
 
     console.log('🚀 [Prod-Seeder] 開始同步正式環境預設資料...')
@@ -26,19 +27,27 @@ export async function seedProdData() {
       return
     }
 
-    // 💡 【核心修正】棄用 createQueryBuilder().insert() 這種會讓快取失效的寫法
-    // 改用 manager.save()，它會自動處理 PostgreSQL 的 Upsert，並同步 Transaction 快取
-    // 同時將實體類別傳入，確保型別安全不使用 any
-    await manager.save(UserSchema, productionUsers)
+    // 嚴格定義要更新的欄位
+    const updateColumns = ['name', 'age', 'role']
 
-    console.log('📝 [Prod-Seeder] 資料庫 manager.save (Upsert) 執行成功')
+    // 執行 Upsert
+    await manager
+      .createQueryBuilder()
+      .insert()
+      .into(UserSchema)
+      .values(productionUsers)
+      .orUpdate(updateColumns, ['id'])
+      .execute()
+
+    console.log('📝 [Prod-Seeder] 資料庫 Upsert 執行成功')
 
     // ==========================================
-    // 驗證最終資料
+    // 驗證最終資料 【保留沙盒，但修正雲端型別轉換】
     // ==========================================
-    const targetIds = productionUsers.map((user) => user.id?.toLowerCase()).filter(Boolean) as string[]
+    const targetIds = productionUsers.map((user) => user.id).filter(Boolean) as string[]
 
-    // 💡 這裡一樣用 QueryBuilder 查，強迫它繞過任何潛在的快取，直接去戳 DB 實體表
+    // 💡 關鍵修正：改用 QueryBuilder，並使用內建的 :... 語法，
+    // 且在 SQL 裡面強制加上 ::uuid 轉型，確保雲端 Postgres 能正確比對！
     const currentProdUsers = await manager
       .createQueryBuilder(UserSchema, 'user')
       .where('user.id IN (:...targetIds)', { targetIds })
@@ -47,13 +56,13 @@ export async function seedProdData() {
     console.log('\n--- 正式環境 預設資料 (Transaction 內確認) ---')
     console.log(JSON.stringify(currentProdUsers, null, 2))
 
+    // 驗證完美無誤後，正式提交
     await queryRunner.commitTransaction()
     console.log('✨ [Prod-Seeder] 預設資料同步成功！')
-  } 
-  catch (error) {
+  } catch (error) {
     console.error('❌ [Prod-Seeder] 發生錯誤，執行 Rollback：', error)
     await queryRunner.rollbackTransaction()
-  } 
+  }
   finally {
     // 不論最後是成功 (try) 還是失敗 (catch)，都必須關閉 queryRunner 的專屬連線，
     // 把資源還給連線池 (Connection Pool)
