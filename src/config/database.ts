@@ -1,7 +1,6 @@
 import { DataSource } from 'typeorm'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
-
 import { getConfig } from './env/index.js'
 import { getConnectionString } from '../utils/db-utils.js'
 // Schema
@@ -19,35 +18,6 @@ import type { DataSourceOptions } from 'typeorm'
 // 要連的資料庫
 const DATABASE_NAME = getConfig<string>('db.database')
 const DATABASE_URL = getConfig<string>('db.databaseUrl')
-const isDev = process.env.NODE_ENV === 'development'
-const isProd = process.env.NODE_ENV === 'production'
-
-
-// ~目前檔案所在-資料夾路徑
-const __filename = fileURLToPath(import.meta.url);
-console.log(``  , __filename)
-// C:\Users\currylee\Desktop\node-zeabur-postgresql-typeorm\src\config\database.ts
-
-// ~目前檔案所在-資料夾路徑(自己算)
-const __dirname = dirname(__filename)
-console.log(``  , __dirname) 
-// C:\Users\currylee\Desktop\node-zeabur-postgresql-typeorm\src\config
-
-
-if(isDev) {
-  console.log(`本地`  , join(__dirname, '../migrations/*.ts') ) 
-  // ../ 會往上一層資料夾,所以會到 src 資料夾,再往下找 migrations/*.ts
-  // 本地 C:\Users\currylee\Desktop\node-zeabur-postgresql-typeorm\src\migrations\*.ts
-}
-
-
-if(isProd) {
-  console.log(`雲端`  , join(__dirname, '../migrations/*.js') ) 
-  // ../ 會往上一層資料夾,所以會到 src 資料夾,再往下找 migrations/*.ts
-  // 雲端 C:\Users\currylee\Desktop\node-zeabur-postgresql-typeorm\dist\src\migrations\*.ts
-}
-
-
 
 // *所有Entity 註冊清單（AppDataSource 使用）
 const dbEntities = [
@@ -81,6 +51,28 @@ const createDbOptions = (): DataSourceOptions => {
   const host = parsedUrl.hostname
   const isLocalMode = host === 'localhost' || host === '127.0.0.1'
   console.log(isLocalMode ? '資料庫模式：本地 Docker PostgreSQL' : '資料庫模式：雲端 PostgreSQL')
+
+  // ~目前檔案路徑
+  const __filename = fileURLToPath(import.meta.url)
+  // C:\Users\currylee\Desktop\node-zeabur-postgresql-typeorm\src\config\database.ts
+  // ~資料夾路徑
+  const __dirname = dirname(__filename)
+  // C:\Users\currylee\Desktop\node-zeabur-postgresql-typeorm\src\config
+  // ------------------------------
+  const isDev = process.env.NODE_ENV === 'development'
+  const isProd = process.env.NODE_ENV === 'production'
+  if (isDev) {
+    // ../ 會往上一層資料夾,所以會到 src 資料夾,再往下找 migrations/*.{ts,js}
+    // console.log(`本地`  , join(__dirname, '../migrations/*.{ts,js}') )
+    // * 本地 C:\Users\currylee\Desktop\node-zeabur-postgresql-typeorm\src\migrations\*.{ts,js}
+  }
+  if (isProd) {
+    // ../ 會往上一層資料夾,所以會到 src 資料夾,再往下找 migrations/*.{ts,js}
+    // console.log(`雲端`  , join(__dirname, '../migrations/*.js') )
+    // * 雲端 /src/dist/src/migrations/*.js
+    // /src 這段 => 是 zeabur 的
+    // /dist/src/migrations/*.js => 這段是我的
+  }
 
   return {
     type: 'postgres',
@@ -117,9 +109,9 @@ const createDbOptions = (): DataSourceOptions => {
 
     // Migration 檔案位置（供 TypeORM CLI 執行 migration 使用）
     migrations: [
-      process.env.NODE_ENV === 'production'
-        ? 'dist/src/migrations/*.js' // 雲端：讀取編譯後的 JS 檔案
-        : 'src/migrations/*.{ts,js}', // 本地：讀取開發中的 TS/JS 檔案
+      // 雲端：從 dist/src/config 出發往上找src 再向下找 dist/src/migrations
+      // 本地：從 src/config 出發往上找src 再向下找  src/migrations
+      join(__dirname, '../migrations/*.{ts,js}'),
     ],
 
     // 連線池優化設定（正式環境尤為重要）
@@ -146,7 +138,8 @@ const connectDB = async () => {
     console.log(`運作順利：PostgreSQL 資料庫 [${DATABASE_NAME}] 連線成功！`)
 
     return AppDataSource
-  } catch (error) {
+  } 
+  catch (error) {
     console.error('資料庫連線失敗：', error)
     process.exit(1) // 實務專案中，連線失敗通常需中止服務
   }
