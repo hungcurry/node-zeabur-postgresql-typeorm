@@ -61,6 +61,7 @@ export async function seedProdData() {
     })
 
     console.log('\n--- 正式環境 預設資料 ---')
+    console.log(`📊 [Prod-Seeder] 當前資料庫資料: ${JSON.stringify(currentProdUsers)}`)
     console.log(JSON.stringify(currentProdUsers, null, 2))
   } 
   catch (error) {
