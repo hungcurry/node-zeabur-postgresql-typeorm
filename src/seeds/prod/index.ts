@@ -14,6 +14,9 @@ export async function seedProdData() {
   // 啟動後，接下來所有的寫入/刪除操作都會進入「臨時沙盒」，先不對硬碟做真實改動
   await queryRunner.startTransaction()
 
+  const isDev = process.env.NODE_ENV === 'development'
+  const isProd = process.env.NODE_ENV === 'production'
+
   try {
     // 必須用 queryRunner 提供的 manager，才能把操作鎖定在同一個 Transaction 內
     const manager = queryRunner.manager
@@ -61,8 +64,15 @@ export async function seedProdData() {
     })
 
     console.log('\n--- 正式環境 預設資料 ---')
-    console.log(`📊 [Prod-Seeder] 當前資料庫資料: ${JSON.stringify(currentProdUsers)}`)
-    console.log(JSON.stringify(currentProdUsers, null, 2))
+    // ⚠️ 注意：在雲端環境（如 Zeabur）正式日誌中，請避免使用 JSON.stringify(..., null, 2) 的多行美化排版。
+    // 因為雲端日誌收集器採非同步按行抓取，多行輸出極容易因事件交錯（Race Condition）導致內容被截斷或吃掉。
+    // 正式環境請一律改用下方「單行輸出」以確保日誌完整性。
+    if (isDev) {
+      console.log(JSON.stringify(currentProdUsers, null, 2))
+    }
+    if (isProd) {
+      console.log(`📊 [Prod-Seeder] : ${JSON.stringify(currentProdUsers[0])}`)
+    }
   } 
   catch (error) {
     // 中間只要任何一個步驟噴錯（不論是寫入失敗、格式不對或網路斷線），就會立刻跳到這裡。

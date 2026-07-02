@@ -10,9 +10,6 @@ import { CategorySchema } from '../models/CategorySchema.js'
 // === 子表 (從表) ===
 import { OrderSchema } from '../models/OrderSchema.js'
 import { ProductSchema } from '../models/ProductSchema.js'
-// seeds資料
-import { seedMockData } from '../seeds/dev/index.js'
-import { seedProdData } from '../seeds/prod/index.js'
 // type
 import type { DataSourceOptions } from 'typeorm'
 
@@ -116,36 +113,8 @@ const connectDB = async () => {
     await AppDataSource.initialize()
     console.log(`運作順利：PostgreSQL 資料庫 [${DATABASE_NAME}] 連線成功！`)
 
-    if (process.env.NODE_ENV === 'development') {
-      // 🥊 組合 A：極速開發（偷懶開掛）
-      // synchronize: process.env.NODE_ENV === 'development'
-      // 關閉 : await AppDataSource.runMigrations()
-      // -------------------------------------
-      // 🛡️ 組合 B：嚴謹版控流（防禦大師）
-      // 有使用 migration再開啟, 取代 synchronize: true
-      // 會自動看 migrations/* 抓有無 遷移檔案 然後建立表單
-      // synchronize: false
-      // 開啟: await AppDataSource.runMigrations()
-      // -------------------------------------
-
-      // 使用 migration再開啟
-      await AppDataSource.runMigrations()
-
-      // 連線成功後，開發環境 建立假資料
-      await seedMockData()
-    }
-
-    // production
-    if (process.env.NODE_ENV === 'production') {
-      // 使用 migration再開啟
-      await AppDataSource.runMigrations()
-
-      // 連線成功後，正式環境 建立種子資料
-      // await seedProdData()
-    }
-
     return AppDataSource
-  }
+  } 
   catch (error) {
     console.error('資料庫連線失敗：', error)
     process.exit(1) // 實務專案中，連線失敗通常需中止服務
