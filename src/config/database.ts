@@ -141,11 +141,12 @@ const connectDB = async () => {
       await AppDataSource.runMigrations()
 
       // 連線成功後，正式環境 建立種子資料
-      await seedProdData()
+      // await seedProdData()
     }
 
     return AppDataSource
-  } catch (error) {
+  }
+  catch (error) {
     console.error('資料庫連線失敗：', error)
     process.exit(1) // 實務專案中，連線失敗通常需中止服務
   }

@@ -1,14 +1,17 @@
 import 'dotenv/config' // 確保第一行加載環境變數
 import app from './src/app.js'
 import { connectDB } from './src/config/database.js'
-
 import { getConfig } from './src/config/env/index.js'
+import { seedProdData } from './src/seeds/prod/index.js'
+
 const PORT = getConfig<number>('db.port') || 3000
 
 async function startServer() {
   try {
     await connectDB()
     console.log('✅ Database service initialized.')
+
+    await seedProdData()
   } 
   catch (err: any) {
     // 從 Prisma 囉唆的訊息中只提取 Message: `...` 內的文字
