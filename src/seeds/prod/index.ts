@@ -21,7 +21,6 @@ export async function seedProdData() {
     // 必須用 queryRunner 提供的 manager，才能把操作鎖定在同一個 Transaction 內
     const manager = queryRunner.manager
     console.log('🚀 [Prod-Seeder] 開始同步正式環境預設資料...')
-    console.log('📦 [Prod-Seeder] 檢查 productionUsers 原始資料:', JSON.stringify(productionUsers))
 
     // 自動取得所有要更新的欄位
     // 排除主鍵 id，避免更新主鍵
