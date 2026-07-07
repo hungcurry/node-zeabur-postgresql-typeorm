@@ -5,7 +5,9 @@ import { getConfig } from './env/index.js'
 import { getConnectionString } from '../utils/db-utils.js'
 // Schema
 // === 無關連表 ===
+import { SystemMetaSchema } from '../models/SystemMetaSchema.js'
 import { UserSchema } from '../models/UserSchema.js'
+import { RoleSchema } from '../models/RoleSchema.js'
 // === 父表 (主表) ===
 import { ProfileSchema } from '../models/ProfileSchema.js'
 import { CategorySchema } from '../models/CategorySchema.js'
@@ -21,7 +23,9 @@ const DATABASE_URL = getConfig<string>('db.databaseUrl')
 
 // *所有Entity 註冊清單（AppDataSource 使用）
 const dbEntities = [
+  SystemMetaSchema,
   UserSchema,
+  RoleSchema,
   // === 父表 (主表) ===
   ProfileSchema,
   CategorySchema,
@@ -29,12 +33,21 @@ const dbEntities = [
   OrderSchema,
   ProductSchema,
 ]
-// *Seeder 清空時的保留資料 Entity 清單
+// *開發模式本地開發（isDev）Entity 白名單（保留手動測試資料）
+// 原因: 開發模式 seedMockData()預設會先跑 TRUNCATE 清空表格,
+// 所以要寫那些表格不會被清空,保留手動測試資料(生產/開發都要保留的表格)
 const keepEntities = new Set([
   // 用 new Set() 意義
   // xxx.has(e) 快速查找（hash）不用掃描整個陣列
+  // ----------------
+  // 開發時保留的 : prod資料
+  SystemMetaSchema, // 紀錄 seedBusinessData 初始化序號
+  UserSchema,
+  RoleSchema,
+  // -----------------
+  // 開發時保留的 : dev資料
   CategorySchema,
-  ProductSchema,
+  ProductSchema
 ])
 
 // 動態建立 TypeORM 配置物件的函式

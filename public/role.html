@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Role CRUD - Mobile Friendly</title>
+  </head>
+
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --success-color: #059669;
+      --danger-color: #ef4444;
+      --warning-color: #f59e0b;
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, system-ui, sans-serif;
+      background-color: var(--bg-color);
+      color: #1e293b;
+      margin: 0;
+      padding: 15px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 1.5rem;
+    }
+    h3 {
+      font-size: 1.1rem;
+      margin-top: 0;
+      color: #334155;
+      border-left: 4px solid var(--primary-color);
+      padding-left: 10px;
+    }
+
+    /* 卡片通用樣式 */
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    input,
+    select {
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter 0.2s;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+    }
+    .btn-success {
+      background: var(--success-color);
+    }
+
+    /* CRUD 列表樣式 */
+    #roleList {
+      background: var(--card-bg);
+      border-radius: 12px;
+    }
+    .role-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .role-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      width: fit-content;
+    }
+    .badge-system {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+    .edit-btn {
+      background: #f1f5f9;
+      color: #475569;
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+    }
+    .del-btn {
+      background: #fee2e2;
+      color: var(--danger-color);
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+    }
+
+    @media (min-width: 480px) {
+      .form-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+      }
+      .form-row .form-group {
+        flex: 1;
+      }
+    }
+  </style>
+
+  <body>
+    <div class="container">
+      <h2>seedSystemData</h2>
+
+      <div class="card">
+        <h3>角色管理 (CRUD)</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>角色名稱 (Name)</label>
+            <input type="text" id="roleName" placeholder="請輸入角色名稱，例如: admin" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>角色敘述 (Description)</label>
+              <input type="text" id="roleDesc" placeholder="角色敘述" />
+            </div>
+            <div class="form-group">
+              <label>是否為系統內建 (Is System)</label>
+              <select id="roleIsSystem">
+                <option value="false">否 (False)</option>
+                <option value="true">是 (True)</option>
+              </select>
+            </div>
+          </div>
+          <button id="addBtn" class="btn-primary">新增角色</button>
+        </div>
+      </div>
+
+      <div id="roleList"></div>
+    </div>
+  </body>
+
+  <script>
+    // const API_URL = 'http://localhost:8080/roles'
+    const API_URL = 'https://node-zeabur-postgresql-typeorm.zeabur.app/roles'
+    let isEditing = null
+
+    // --- 1. API 邏輯層 (Data Access) ---
+    const RoleAPI = {
+      async request(url, options = {}) {
+        try {
+          const res = await fetch(url, options)
+          const result = await res.json()
+
+          if (result.status !== 'success') {
+            throw new Error(result.message || '請求失敗')
+          }
+          return result
+        } catch (err) {
+          console.error('API Error:', err)
+          throw err
+        }
+      },
+      getAll() {
+        return this.request(API_URL)
+      },
+      create(data) {
+        return this.request(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+      },
+      update(id, data) {
+        return this.request(`${API_URL}/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+      },
+      delete(id) {
+        return this.request(`${API_URL}/${id}`, { method: 'DELETE' })
+      },
+    }
+
+    // --- 2. UI 渲染層 ---
+    const renderRoles = async () => {
+      const listContainer = document.getElementById('roleList')
+      try {
+        const result = await RoleAPI.getAll()
+
+        if (result.data.length === 0) {
+          listContainer.innerHTML = '<div class="empty-state">目前暫無角色資料</div>'
+          return
+        }
+
+        listContainer.innerHTML = result.data
+          .map(
+            (role) => `
+      <div class="role-item">
+        <div class="role-info">
+          <strong>${role.name}</strong>
+          <span style="font-size: 0.9rem; color: #64748b;">${role.description || '無敘述'}</span>
+          <span class="badge ${role.is_system ? 'badge-system' : ''}">
+            ${role.is_system ? '系統內建 (System)' : '自訂角色 (Custom)'}
+          </span>
+        </div>
+        <div class="actions">
+          <button class="edit-btn" 
+                  data-id="${role.id}" 
+                  data-name="${role.name}" 
+                  data-description="${role.description || ''}" 
+                  data-is_system="${role.is_system}">編輯</button>
+          <button class="del-btn" data-id="${role.id}">刪除</button>
+        </div>
+      </div>
+    `,
+          )
+          .join('')
+      } catch (err) {
+        listContainer.innerHTML = `<div class="empty-state" style="color:red">錯誤: ${err.message}</div>`
+      }
+    }
+
+    // --- 3. 事件處理層 ---
+    const nameInput = document.getElementById('roleName')
+    const descInput = document.getElementById('roleDesc')
+    const isSystemInput = document.getElementById('roleIsSystem')
+    const addBtn = document.getElementById('addBtn')
+
+    const resetForm = () => {
+      isEditing = null
+      nameInput.value = ''
+      descInput.value = ''
+      isSystemInput.value = 'false'
+      addBtn.innerText = '新增角色'
+      addBtn.style.background = ''
+    }
+
+    addBtn.addEventListener('click', async () => {
+      const payload = {
+        name: nameInput.value.trim(),
+        description: descInput.value.trim(),
+        is_system: isSystemInput.value === 'true',
+      }
+
+      if (!payload.name) return alert('請檢查角色名稱')
+
+      addBtn.disabled = true
+      try {
+        if (isEditing) {
+          await RoleAPI.update(isEditing, payload)
+        } else {
+          await RoleAPI.create(payload)
+        }
+        resetForm()
+        await renderRoles()
+      } catch (err) {
+        alert(isEditing ? '更新失敗' : '新增失敗')
+      } finally {
+        addBtn.disabled = false
+      }
+    })
+
+    document.getElementById('roleList').addEventListener('click', async (e) => {
+      const id = e.target.dataset.id
+
+      if (e.target.classList.contains('del-btn')) {
+        if (!confirm('確定刪除此角色？')) return
+        try {
+          await RoleAPI.delete(id)
+          renderRoles()
+        } catch (err) {
+          alert('刪除失敗')
+        }
+      }
+
+      if (e.target.classList.contains('edit-btn')) {
+        isEditing = id
+        nameInput.value = e.target.dataset.name
+        descInput.value = e.target.dataset.description
+        isSystemInput.value = e.target.dataset.is_system
+
+        addBtn.innerText = '儲存更新'
+        addBtn.style.background = '#059669'
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    })
+
+    document.addEventListener('DOMContentLoaded', renderRoles)
+  </script>
+</html>

@@ -12,12 +12,47 @@ import { mockCategories } from './categories.seed.js'
 import { mockOrders } from './orders.seed.js'
 import { mockProducts } from './products.seed.js'
 
+/**
+ * @param allEntities 所有資料庫 Entity 列表
+ * @param keepEntities 即使重新啟動 Seed也要保留不予清空的白名單
+ */
+async function clearDatabaseTables(allEntities:any[], keepEntities:Set<any>) {
+  // ==========================================
+  // 🚀1.每次重新執行 Seed 時，先清空舊資料
+  // 誰有 Foreign Key，誰就是(子表)（Child）: orders / products
+  // ==========================================
+  console.log('🧹 [Seeder] 正在透過 CASCADE 安全連鎖清空歷史資料...')
+
+  // 要清空的 Entities
+  const cleanEntities = allEntities.filter((entity) => !keepEntities.has(entity))
+  // 要清空的Tables資料表
+  const cleanTables = cleanEntities.map((entity) => AppDataSource.getMetadata(entity).tableName)
+  console.log(`cleanTables`, cleanTables)
+  // cleanTables [ 'profiles', 'orders' ]
+
+  if (cleanTables.length === 0) {
+    console.log('[Seeder] 沒有需要清空的資料表。')
+    return
+  }
+
+  // 使用全域 AppDataSource 獨立執行清空 SQL，不污染後續的交易沙盒
+  await AppDataSource.query(`
+    TRUNCATE TABLE
+      ${cleanTables.map((table) => `"${table}"`).join(', ')}
+    RESTART IDENTITY CASCADE;
+  `)
+  console.log('🧹 [Seeder] 歷史舊資料已成功連鎖清空！')
+}
 export async function seedMockData() {
   /** 資料初始化
    * 執行資料庫假資料初始化 (Seeder)
    * 採用資料庫交易 (Transaction) 機制，
    * 確保資料寫入的「原子性」（要嘛全成功，要嘛全失敗）
    */
+
+  // *執行清空舊資料
+  await clearDatabaseTables(dbEntities, keepEntities)
+
   // 建立一個獨立的 queryRunner 連線物件
   const queryRunner = AppDataSource.createQueryRunner()
   // 讓 queryRunner 與資料庫建立實體連線
@@ -27,6 +62,8 @@ export async function seedMockData() {
   await queryRunner.startTransaction()
 
   try {
+    console.log('🚀 [Seeder] 開始開發環境預設資料...')
+
     // 必須用 queryRunner 提供的 manager，才能把操作鎖定在同一個 Transaction 內
     const manager = queryRunner.manager
     // (父表)
@@ -36,26 +73,6 @@ export async function seedMockData() {
     const orderManager = manager.getRepository(OrderSchema)
     const productManager = manager.getRepository(ProductSchema)
 
-    // ==========================================
-    // 🚀1.每次重新執行 Seed 時，先清空舊資料
-    // 誰有 Foreign Key，誰就是(子表)（Child）: orders / products
-    // ==========================================
-    console.log('🧹 [Seeder] 正在透過 CASCADE 安全連鎖清空歷史資料...')
-
-    const allEntities = [...dbEntities]
-    // 要清空的 Entities
-    const cleanEntities = allEntities.filter((e) => !keepEntities.has(e))
-    // 要清空的Tables資料表
-    const cleanTables = cleanEntities.map((e) => AppDataSource.getMetadata(e).tableName)
-    console.log(`cleanTables`, cleanTables)
-    // cleanTables [ 'users', 'profiles', 'orders' ]
-
-    await queryRunner.query(`
-      TRUNCATE TABLE
-        ${cleanTables.map((table) => `"${table}"`).join(', ')}
-      RESTART IDENTITY CASCADE;
-    `)
-    console.log('🧹 [Seeder] 歷史舊資料已成功連鎖清空！')
     // ==========================================
     // 🚀2.資料寫入 💡 因爲有外鍵約束，被合併的表(父表)必須先 寫入
     // 誰有 Foreign Key，誰就是(子表)（Child）: orders / products

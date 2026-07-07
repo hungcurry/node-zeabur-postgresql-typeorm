@@ -17,9 +17,17 @@ type TUser = {
   updatedAt?: Date
 }
 
+type TRole = {
+  name: string
+  description: string
+  is_system: boolean
+  createdAt?: Date
+  updatedAt?: Date
+}
+
 type TTokenPayload = {
   userId: string
   role: string
 }
 
-export type { ApiResponse, TTodo, TUser, TTokenPayload }
+export type { ApiResponse, TTodo, TUser, TRole, TTokenPayload }

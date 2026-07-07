@@ -9,6 +9,7 @@ import { swaggerDocs, swaggerUi } from './/utils/swagger.js'
 import type { Application, Request, Response, NextFunction } from 'express'
 // router
 import userRoutes from './routes/userRoutes.js'
+import roleRoutes from './routes/roleRouter.js'
 import todoRoutes from './routes/todoRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import productRoutes from './routes/productRoutes.js'
@@ -56,6 +57,7 @@ app.get('/test', (req, res) => {
 
 // 模組化路由掛載
 app.use('/users', userRoutes)
+app.use('/roles', roleRoutes)
 app.use('/todos', todoRoutes)
 app.use('/auth', authRoutes)
 app.use('/products', productRoutes)

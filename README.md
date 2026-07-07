@@ -545,6 +545,7 @@ synchronize: false
 
 // 2. 建立藍圖
 npm run migration:generate --name=AddEmailToUser
+// npm run migration:generate --name=SystemMetaSchema
 
 // 3.node執行序,會報錯誤 產生檔案 加上 type
 import type { MigrationInterface, QueryRunner } from "typeorm"

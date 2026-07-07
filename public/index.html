@@ -4,175 +4,176 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>User CRUD - Mobile Friendly</title>
-    <style>
-      :root {
-        --primary-color: #2563eb;
-        --success-color: #059669;
-        --danger-color: #ef4444;
-        --warning-color: #f59e0b;
-        --bg-color: #f1f5f9;
-        --card-bg: #ffffff;
-      }
+  </head>
 
-      * {
-        box-sizing: border-box;
-      }
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --success-color: #059669;
+      --danger-color: #ef4444;
+      --warning-color: #f59e0b;
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+    }
 
-      body {
-        font-family: -apple-system, system-ui, sans-serif;
-        background-color: var(--bg-color);
-        color: #1e293b;
-        margin: 0;
-        padding: 15px;
-      }
+    * {
+      box-sizing: border-box;
+    }
 
-      .container {
-        max-width: 600px;
-        margin: auto;
-      }
-      h2 {
-        text-align: center;
-        margin: 20px 0;
-        font-size: 1.5rem;
-      }
-      h3 {
-        font-size: 1.1rem;
-        margin-top: 0;
-        color: #334155;
-        border-left: 4px solid var(--primary-color);
-        padding-left: 10px;
-      }
+    body {
+      font-family: -apple-system, system-ui, sans-serif;
+      background-color: var(--bg-color);
+      color: #1e293b;
+      margin: 0;
+      padding: 15px;
+    }
 
-      /* 卡片通用樣式 */
-      .card {
-        background: var(--card-bg);
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-      }
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 1.5rem;
+    }
+    h3 {
+      font-size: 1.1rem;
+      margin-top: 0;
+      color: #334155;
+      border-left: 4px solid var(--primary-color);
+      padding-left: 10px;
+    }
 
-      .form-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-      }
+    /* 卡片通用樣式 */
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
 
-      .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .form-group label {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #64748b;
-      }
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
 
-      input {
-        padding: 12px;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 16px;
-        outline: none;
-      }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+    }
 
-      button {
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: filter 0.2s;
-        color: white;
-      }
+    input {
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+    }
 
-      button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
+    button {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter 0.2s;
+      color: white;
+    }
 
-      .btn-primary {
-        background: var(--primary-color);
-      }
-      .btn-success {
-        background: var(--success-color);
-      }
-      .btn-warning {
-        background: var(--warning-color);
-      }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-      /* Auth 區域專屬 */
-      .auth-section {
-        border: 2px solid #e2e8f0;
-      }
-      .token-display {
-        background: #f8fafc;
-        padding: 10px;
-        border-radius: 6px;
-        font-family: monospace;
-        font-size: 12px;
-        word-break: break-all;
-        margin-top: 10px;
-        border: 1px dashed #cbd5e1;
-      }
+    .btn-primary {
+      background: var(--primary-color);
+    }
+    .btn-success {
+      background: var(--success-color);
+    }
+    .btn-warning {
+      background: var(--warning-color);
+    }
 
-      /* CRUD 列表樣式 */
-      #userList {
-        background: var(--card-bg);
-        border-radius: 12px;
-      }
-      .user-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px;
-        border-bottom: 1px solid #f1f5f9;
-      }
-      .user-info {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .badge {
-        background: #e0f2fe;
-        color: #0369a1;
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        width: fit-content;
-      }
-      .actions {
+    /* Auth 區域專屬 */
+    .auth-section {
+      border: 2px solid #e2e8f0;
+    }
+    .token-display {
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      margin-top: 10px;
+      border: 1px dashed #cbd5e1;
+    }
+
+    /* CRUD 列表樣式 */
+    #userList {
+      background: var(--card-bg);
+      border-radius: 12px;
+    }
+    .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      width: fit-content;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+    .edit-btn {
+      background: #f1f5f9;
+      color: #475569;
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+    }
+    .del-btn {
+      background: #fee2e2;
+      color: var(--danger-color);
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+    }
+
+    @media (min-width: 480px) {
+      .form-row {
         display: flex;
         gap: 10px;
+        align-items: flex-end;
       }
-      .edit-btn {
-        background: #f1f5f9;
-        color: #475569;
-        padding: 6px 12px;
-        font-size: 14px;
-        border-radius: 6px;
+      .form-row .form-group {
+        flex: 1;
       }
-      .del-btn {
-        background: #fee2e2;
-        color: var(--danger-color);
-        padding: 6px 12px;
-        font-size: 14px;
-        border-radius: 6px;
-      }
-
-      @media (min-width: 480px) {
-        .form-row {
-          display: flex;
-          gap: 10px;
-          align-items: flex-end;
-        }
-        .form-row .form-group {
-          flex: 1;
-        }
-      }
-    </style>
-  </head>
+    }
+  </style>
 
   <body>
     <div class="container">
@@ -229,7 +230,9 @@
   </body>
 
   <script>
+    // const API_URL = 'http://localhost:8080/users'
     const API_URL = 'https://node-zeabur-postgresql-typeorm.zeabur.app/users'
+
     // token驗證-前端UI 沒有做signup
     // const AUTH_URL = 'http://localhost:8080'
     const AUTH_URL = 'https://node-zeabur-postgresql-typeorm.zeabur.app'
