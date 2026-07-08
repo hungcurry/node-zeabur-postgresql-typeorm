@@ -55,25 +55,38 @@ npm run clean:port
 > 網址
 
 ```jsx
-// 🚀 API網址
+// 🚀 雲端 Zeabur API網址
 // ---
-// ~Zeabur 使用index.html 測試
+使用雲端資料庫: user / role
+
+// 測試 商業邏輯(初始化 只執行一次)
+**使用index.html 測試**
+http://127.0.0.1:5500/public/index.html
+
 https://node-zeabur-postgresql-typeorm.zeabur.app/users
 
-// ~swagger
+// 測試 系統邏輯(資料不會變)
+**使用index.html 測試**
+http://127.0.0.1:5500/public/role.html
+
+https://node-zeabur-postgresql-typeorm.zeabur.app/roles
+
+**swagger**
 https://node-zeabur-postgresql-typeorm.zeabur.app/api-docs
 
 
 // 🚀 本機 使用postman 測試
 // ---
+使用本地資料庫: todo / product
+
 // PORT=8080
 http://localhost:8080/todos
 
 // 測試前端送資料過去 zod驗證
-http://localhost:8080/products
-
+**使用products.html 測試**
 http://127.0.0.1:5500/public/products.html
 
+http://localhost:8080/products
 ```
 
 > 時間格式
