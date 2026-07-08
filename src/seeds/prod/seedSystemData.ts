@@ -1,7 +1,7 @@
 import { In } from 'typeorm'
 import { AppDataSource } from '@/config/database.js'
 // Schema
-import { RoleSchema } from '@/models/RoleSchema.js'
+import { RoleSchema } from '@/models/index.js'
 // seed資料
 import { systemRoles } from './roles.seed.js'
 

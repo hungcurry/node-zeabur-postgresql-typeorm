@@ -1,11 +1,13 @@
 // import { DataSource } from 'typeorm'
 import { AppDataSource, dbEntities, keepEntities } from '@/config/database.js'
 // Schema
-import { ProfileSchema } from '@/models/ProfileSchema.js'
-import { CategorySchema } from '@/models/CategorySchema.js'
-// === 子表 (從表) ===
-import { OrderSchema } from '@/models/OrderSchema.js'
-import { ProductSchema } from '@/models/ProductSchema.js'
+import {
+  ProfileSchema,
+  CategorySchema,
+  // === 子表 (從表) ===
+  OrderSchema,
+  ProductSchema,
+} from '@/models/index.js'
 // mock 假資料
 import { mockProfiles } from './profiles.seed.js'
 import { mockCategories } from './categories.seed.js'
@@ -16,7 +18,7 @@ import { mockProducts } from './products.seed.js'
  * @param allEntities 所有資料庫 Entity 列表
  * @param keepEntities 即使重新啟動 Seed也要保留不予清空的白名單
  */
-async function clearDatabaseTables(allEntities:any[], keepEntities:Set<any>) {
+async function clearDatabaseTables(allEntities: any[], keepEntities: Set<any>) {
   // ==========================================
   // 🚀1.每次重新執行 Seed 時，先清空舊資料
   // 誰有 Foreign Key，誰就是(子表)（Child）: orders / products

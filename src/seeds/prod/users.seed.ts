@@ -1,4 +1,4 @@
-import type { TUser } from '../../models/UserSchema.js'
+import type { TUser } from '../../models/index.js'
 
 /**
  * 正式環境所需的基礎系統資料

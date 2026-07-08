@@ -4,13 +4,14 @@
 // ~新方式 UUID 方式
 import { randomUUID } from 'crypto'
 import { AppDataSource } from '@/config/database.js'
-import { UserSchema } from '@/models/UserSchema.js'
+import { UserSchema } from '@/models/index.js'
 // 引入 logger
 import { createLogger } from '@/utils/logger.js'
 import { handleError } from '@/middlewares/errorHandle.js'
 // type
 import type { Request, Response } from 'express'
-import type { TUser, ApiResponse } from '@/type/index.js'
+import type { ApiResponse } from '@/type/index.js'
+import type { TUser } from '@/models/index.js'
 import type { TCreateUserInput, TUpdateUserInput } from '@/zod/UserZod.js'
 
 // ~logger參數順序：level, message, payload

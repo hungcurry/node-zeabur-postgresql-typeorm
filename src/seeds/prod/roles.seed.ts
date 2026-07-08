@@ -1,4 +1,4 @@
-import type { TRole } from '../../models/RoleSchema.js'
+import type { TRole } from '../../models/index.js'
 
 /**
  * 正式環境所需的基礎系統資料

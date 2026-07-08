@@ -4,13 +4,13 @@
 import jwt from 'jsonwebtoken'
 import { getConfig } from '@/config/env/index.js'
 import type { SignOptions } from 'jsonwebtoken'
-import type { TTokenPayload } from '@/type/index.js'
+import type { TToken } from '@/type/index.js'
 
 const JWT_SECRET = getConfig<string>('secret.jwtSecret')
 const JWT_EXPIRES_IN = getConfig<string>('secret.jwtExpiresDay') as SignOptions['expiresIn']
 
 // *簽發 Token
-export const signToken = (payload: TTokenPayload): string => {
+export const signToken = (payload: TToken): string => {
   // 1. 防呆機制：如果忘記在 .env 設定密鑰，直接報錯，不讓你亂發 Token
   if (!JWT_SECRET) throw new Error('JWT_SECRET is not defined in config')
 
@@ -26,9 +26,9 @@ export const signToken = (payload: TTokenPayload): string => {
 }
 
 // * 驗證 Token
-export const verifyToken = (token: string): TTokenPayload => {
+export const verifyToken = (token: string): TToken => {
   try {
-    return jwt.verify(token, JWT_SECRET) as TTokenPayload
+    return jwt.verify(token, JWT_SECRET) as TToken
   } 
   catch (error: any) {
     throw new Error(error.message || 'Invalid or expired token')

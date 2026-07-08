@@ -10,7 +10,7 @@ import { handleError, appError } from '@/middlewares/errorHandle.js'
 import { signToken } from '@/utils/generateJWT.js'
 // type
 import type { Request, Response, NextFunction } from 'express'
-import type { TTokenPayload, ApiResponse } from '@/type/index.js'
+import type { TToken, ApiResponse } from '@/type/index.js'
 
 // ~logger參數順序：level, message, payload
 const logger = createLogger('authController')
@@ -65,7 +65,7 @@ export const handleSignup = async (req: Request, res: Response, next: NextFuncti
     // ~1. 註冊後「自動登入」（核發 Token）
     // ~2. 註冊後「需手動登入」（不核發 Token）
     // ---------------------------------------------------------
-    const newUserPayload: TTokenPayload = {
+    const newUserPayload: TToken = {
       userId: fakeNewUser._id,
       role: fakeNewUser.role as 'admin' | 'user',
     }
@@ -119,7 +119,7 @@ export const handleLogin = async (req: Request, res: Response) => {
   // const user = await User.findOne({ email }) ...
 
   // 假設驗證成功，取得使用者資訊
-  const userData: TTokenPayload = {
+  const userData: TToken = {
     userId: 'user_12345',
     role: 'admin',
   }

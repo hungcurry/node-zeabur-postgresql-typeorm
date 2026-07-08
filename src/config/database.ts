@@ -4,25 +4,10 @@ import { fileURLToPath } from 'url'
 import { getConfig } from './env/index.js'
 import { getConnectionString } from '../utils/db-utils.js'
 // Schema
-// === 無關連表 ===
-import { SystemMetaSchema } from '../models/SystemMetaSchema.js'
-import { UserSchema } from '../models/UserSchema.js'
-import { RoleSchema } from '../models/RoleSchema.js'
-// === 父表 (主表) ===
-import { ProfileSchema } from '../models/ProfileSchema.js'
-import { CategorySchema } from '../models/CategorySchema.js'
-// === 子表 (從表) ===
-import { OrderSchema } from '../models/OrderSchema.js'
-import { ProductSchema } from '../models/ProductSchema.js'
-// type
-import type { DataSourceOptions } from 'typeorm'
-
-// 要連的資料庫
-const DATABASE_NAME = getConfig<string>('db.database')
-const DATABASE_URL = getConfig<string>('db.databaseUrl')
-
-// *所有Entity 註冊清單（AppDataSource 使用）
-const dbEntities = [
+import {
+  // 這個是陣列，裡面放所有的 Schema
+  allEntities,
+  // === 無關連表 ===
   SystemMetaSchema,
   UserSchema,
   RoleSchema,
@@ -32,7 +17,16 @@ const dbEntities = [
   // === 子表 (從表) ===
   OrderSchema,
   ProductSchema,
-]
+} from '../models/index.js'
+// type
+import type { DataSourceOptions } from 'typeorm'
+
+// 要連的資料庫
+const DATABASE_NAME = getConfig<string>('db.database')
+const DATABASE_URL = getConfig<string>('db.databaseUrl')
+
+// *所有Entity 註冊清單（AppDataSource 使用）
+const dbEntities = [...allEntities]
 // *開發模式本地開發（isDev）Entity 白名單（保留手動測試資料）
 // 原因: 開發模式 seedMockData()預設會先跑 TRUNCATE 清空表格,
 // 所以要寫那些表格不會被清空,保留手動測試資料(生產/開發都要保留的表格)
@@ -47,7 +41,7 @@ const keepEntities = new Set([
   // -----------------
   // 開發時保留的 : dev資料
   CategorySchema,
-  ProductSchema
+  ProductSchema,
 ])
 
 // 動態建立 TypeORM 配置物件的函式
@@ -118,7 +112,7 @@ const createDbOptions = (): DataSourceOptions => {
     logging: process.env.DB_LOGGING === 'true',
 
     // 註冊資料庫實體（Entities）
-    entities: [...dbEntities],
+    entities: [...allEntities],
 
     // Migration 檔案位置（供 TypeORM CLI 執行 migration 使用）
     migrations: [

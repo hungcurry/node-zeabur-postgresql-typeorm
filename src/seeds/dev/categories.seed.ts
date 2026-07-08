@@ -1,4 +1,4 @@
-import type { TCategory } from '../../models/CategorySchema.js'
+import type { TCategory } from '../../models/index.js'
 
 export const mockCategories: TCategory[] = [
   { id: '6b4f2c91-8a3d-4c7b-9e52-1f8a6c3b0d4e', name: '其他' },

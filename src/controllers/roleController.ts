@@ -4,13 +4,14 @@
 // ~新方式 UUID 方式
 import { randomUUID } from 'crypto'
 import { AppDataSource } from '@/config/database.js'
-import { RoleSchema } from '@/models/RoleSchema.js'
+import { RoleSchema } from '@/models/index.js'
 // 引入 logger
 import { createLogger } from '@/utils/logger.js'
 import { handleError } from '@/middlewares/errorHandle.js'
 // type
 import type { Request, Response } from 'express'
-import type { TRole, ApiResponse } from '@/type/index.js'
+import type { ApiResponse } from '@/type/index.js'
+import type { TRole } from '@/models/index.js'
 import type { TCreateRoleInput, TUpdateRoleInput } from '@/zod/RoleZod.js'
 
 // ~logger參數順序：level, message, payload
@@ -62,7 +63,7 @@ export const handleCreateRole = async (req: Request, res: TRoleResponse) => {
       data: [savedRole as unknown as TRole],
     })
   } 
-  catch (error) {
+  catch (error: any) {
     // 💡 移除 any 關鍵字，符合 strict 思維
     handleError({
       res,
@@ -113,7 +114,7 @@ export const handleUpdateRole = async (req: Request, res: TRoleResponse) => {
       data: [updatedRole as unknown as TRole],
     })
   } 
-  catch (error) {
+  catch (error: any) {
     // 💡 移除 any 關鍵字，符合 strict 思維
     handleError({
       res,
@@ -161,7 +162,7 @@ export const handleDeleteRole = async (req: Request, res: TRoleResponse) => {
       message: '刪除成功',
     })
   } 
-  catch (error) {
+  catch (error: any) {
     // 💡 移除 any 關鍵字，符合 strict 思維
     handleError({
       res,

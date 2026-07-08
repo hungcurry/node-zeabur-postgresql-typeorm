@@ -1,4 +1,4 @@
-import type { TOrder } from '../../models/OrderSchema.js'
+import type { TOrder } from '../../models/index.js'
 
 export const mockOrders: TOrder[] = [
   {

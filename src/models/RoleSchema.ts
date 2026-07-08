@@ -3,7 +3,7 @@ import { EntitySchema } from 'typeorm'
 // ==============================
 // TypeScript 型別 (僅用於資料庫模型)
 // ==============================
-export interface TRole {
+export type TRole = {
   id: string // 💡 主鍵是用 UUID (字串)
   name: string
   description: string

@@ -1,15 +1,9 @@
 import { In } from 'typeorm'
 import { AppDataSource } from '@/config/database.js'
 // Schema
-import { SystemMetaSchema } from '@/models/SystemMetaSchema.js'
-import { UserSchema } from '@/models/UserSchema.js'
-// 假設你有其他要初始化的 Schema
-// import { RoleSchema } from '@/models/RoleSchema.js'
-// import { ProductSchema } from '@/models/ProductSchema.js'
+import { SystemMetaSchema, UserSchema } from '@/models/index.js'
 // seed資料
 import { productionUsers } from './users.seed.js'
-// import { productionRoles } from './roles.seed.js'
-// import { productionProducts } from './products.seed.js'
 
 export async function seedBusinessData() {
   // =========================================

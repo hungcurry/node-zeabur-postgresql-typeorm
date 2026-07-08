@@ -1,4 +1,4 @@
-import type { TProduct } from '../../models/ProductSchema.js'
+import type { TProduct } from '../../models/index.js'
 
 export const mockProducts: TProduct[] = [
   {
