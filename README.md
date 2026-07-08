@@ -432,11 +432,8 @@ relations: {
 npm install typeorm pg
 npm install -D typescript tsx @types/node @types/pg
 
-// 希望維持原本簡短的 --name=AddEmailToUser，
-// 那最好的跨平台方案就是藉由 cross-var 
-// 這個 npm 套件來抹平作業系統的差異
-npm install --save-dev cross-var
-// npm run migration:generate --name=AddEmailToUser
+// 使用這段 減少產生migration命名
+"migration:generate": "node scripts/generate-migration.mjs",
 ```
 
 
@@ -450,7 +447,7 @@ npm install --save-dev cross-var
   "clean:port": "npx kill-port 8080",
   // migration 指令
   "typeorm": "tsx ./node_modules/typeorm/cli.js -d ./src/config/database.ts",
-  "migration:generate": "cross-var npm run typeorm -- migration:generate src/migrations/$npm_config_name",
+  "migration:generate": "node scripts/generate-migration.mjs",
   "migration:run": "npm run typeorm -- migration:run",
   "migration:revert": "npm run typeorm -- migration:revert",
   "migration:show": "npm run typeorm -- migration:show"
@@ -499,7 +496,7 @@ docker compose up -d
 4. 初始化 對著「空資料庫」拍快照
 ```jsx
 1. 建立藍圖
-npm run migration:generate --name=InitProject
+npm run migration:generate InitProject
 // TypeORM 連進去剛剛啟動的 Docker，發現裡面什麼表都沒有（因為剛才重啟清空了），
 // 對比你的 Entity 程式碼，就會把所有建表語法打包，
 // 成功在 src/migrations/ 資料夾下產生 InitProject 檔案
@@ -541,7 +538,7 @@ Zeabur 接手： 雲端執行：Zeabur 執行新設定的 start 指令
 {
   "scripts": {
     // 👇 prestart / start 指令
-    "prestart": "cross-env NODE_ENV=production npm run migration:run",
+    "prestart": "cross-env NODE_ENV=production npm run migration:run:prod",
     "start": "cross-env NODE_ENV=production node dist/index.js",
     "migration:run": "npm run typeorm -- migration:run",
   }
@@ -557,8 +554,8 @@ Zeabur 接手： 雲端執行：Zeabur 執行新設定的 start 指令
 synchronize: false
 
 // 2. 建立藍圖
-npm run migration:generate --name=AddEmailToUser
-// npm run migration:generate --name=SystemMetaSchema
+npm run migration:generate AddEmailToUser
+// npm run migration:generate SystemMetaSchema
 
 // 3.node執行序,會報錯誤 產生檔案 加上 type
 import type { MigrationInterface, QueryRunner } from "typeorm"
@@ -578,7 +575,7 @@ npm run migration:run
 // 類似用commit 去取消 上一個commit
 // 把 UserSchema.ts email 欄位刪除
 1. 刪除掉 UserSchema.ts 的 email 欄位
-2. npm run migration:generate --name=RemoveEmailToUser
+2. npm run migration:generate RemoveEmailToUser
 3. npm run migration:run
 
 🟢 (推薦)方法二: 刪除掉 migrations/AddEmailToUser
