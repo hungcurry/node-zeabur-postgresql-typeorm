@@ -1,16 +1,21 @@
 import 'dotenv/config' // 確保第一行加載環境變數
 import app from './src/app.js'
-import { AppDataSource, connectDB } from './src/config/database.js'
+import http from 'http'
+import { connectDB } from './src/config/connection.js'
 import { getConfig } from './src/config/env/index.js'
+import { AppDataSource } from './src/config/database.js'
 // seeds資料
 import { seedMockData } from './src/seeds/dev/index.js'
 import { seedProdData } from './src/seeds/prod/index.js'
 
+// 整個系統只有一個 server 實例
+const server = http.createServer(app)
 const PORT = getConfig<number>('db.port') || 3000
+const nodeEnv = getConfig('db.nodeEnv') || process.env.NODE_ENV || 'development'
+const isProd = nodeEnv === 'production'
+const isDev = nodeEnv === 'development'
 
 async function initSeedsData() {
-  const isDev = process.env.NODE_ENV === 'development'
-  const isProd = process.env.NODE_ENV === 'production'
   if (!isDev && !isProd) return
 
   // 使用 migration再開啟（嚴謹版控流，取代 synchronize: true）
@@ -26,25 +31,23 @@ async function initSeedsData() {
   // 開啟: await AppDataSource.runMigrations()
   // -------------------------------------
 
-  // 2. 依環境注入不同的 Seed 資料
+  // 依環境注入不同的 Seed 資料
+  if (isProd) {
+    await seedProdData()
+  }
   if (isDev) {
     await seedMockData()
     // 測試時 想看 prod 資料 請打開
     // await seedProdData()
   }
-  if (isProd) {
-    await seedProdData()
-  }
 }
-
 async function startServer() {
   let isDbConnected = false
   try {
     await connectDB()
-    console.log('✅ Database service initialized.')
     console.log('🚀 Starting server...')
     isDbConnected = true
-  } 
+  }
   catch (err: any) {
     // 提取 Message: `...` 內的文字
     const rawMessage = err.message || ''
@@ -59,14 +62,17 @@ async function startServer() {
   if (isDbConnected) {
     try {
       await initSeedsData()
-    } 
+    }
     catch (err: any) {
-      console.error('⚠️ [DB-Init] 遷移或種子資料執行失敗，但伺服器仍將嘗試啟動:', err)
+      console.error('⚠️ [DB-Seed] 假資料寫入失敗，但伺服器仍繼續啟動:', err)
     }
   }
 
-  app.listen(PORT, () => {
-    console.log(`🚀 Server on http://localhost:${PORT}`)
+  // ~啟動 HTTP 伺服器
+  server.listen(PORT, () => {
+    console.log('=================================')
+    console.log(`🚀 Server running on http://localhost:${PORT}`)
+    console.log('=================================')
   })
 }
 

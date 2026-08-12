@@ -24,6 +24,10 @@ import type { DataSourceOptions } from 'typeorm'
 // 要連的資料庫
 const DATABASE_NAME = getConfig<string>('db.database')
 const DATABASE_URL = getConfig<string>('db.databaseUrl')
+// 建立 DataSource。
+// ⭐ App 啟動與 TypeORM CLI 共用同一份 DataSource。
+// ⭐ TypeORM CLI 執行 migration 時，就是透過這個物件取得資料庫設定。
+const AppDataSource = new DataSource(createDBOtions())
 
 // *所有Entity 註冊清單（AppDataSource 使用）
 const dbEntities = [...allEntities]
@@ -45,19 +49,10 @@ const keepEntities = new Set([
 ])
 
 // 動態建立 TypeORM 配置物件的函式
-const createDbOptions = (): DataSourceOptions => {
-  // throw 錯誤出去交給外層connectDB,去決定執行process.exit(1)
-  if (!DATABASE_URL) {
-    throw new Error('DATABASE_URL 未設定')
-  }
-  if (!DATABASE_NAME) {
-    throw new Error('沒有指定資料庫名稱')
-  }
-
+function createDBOtions(): DataSourceOptions {
   const parsedUrl = new URL(DATABASE_URL)
   const host = parsedUrl.hostname
   const isLocalMode = host === 'localhost' || host === '127.0.0.1'
-  console.log(isLocalMode ? '資料庫模式：本地 Docker PostgreSQL' : '資料庫模式：雲端 PostgreSQL')
 
   // ~目前檔案路徑
   const __filename = fileURLToPath(import.meta.url)
@@ -128,28 +123,5 @@ const createDbOptions = (): DataSourceOptions => {
     },
   }
 }
-// 建立 DataSource。
-// ⭐ App 啟動與 TypeORM CLI 共用同一份 DataSource。
-// ⭐ TypeORM CLI 執行 migration 時，就是透過這個物件取得資料庫設定。
-const AppDataSource = new DataSource(createDbOptions())
 
-const connectDB = async () => {
-  // 避免重複 initialize()
-  if (AppDataSource.isInitialized) {
-    return AppDataSource
-  }
-
-  // 建立連線池
-  try {
-    await AppDataSource.initialize()
-    console.log(`運作順利：PostgreSQL 資料庫 [${DATABASE_NAME}] 連線成功！`)
-
-    return AppDataSource
-  } 
-  catch (error) {
-    console.error('資料庫連線失敗：', error)
-    process.exit(1) // 實務專案中，連線失敗通常需中止服務
-  }
-}
-
-export { AppDataSource, connectDB, dbEntities, keepEntities }
+export { AppDataSource, dbEntities, keepEntities }

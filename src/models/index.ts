@@ -4,6 +4,7 @@
 // ==============================
 // === 無關連表 ===
 export type { TSystemMeta } from './SystemMetaSchema.js'
+export type { TArticle } from './ArticleSchema.js'
 export type { TUser } from './UserSchema.js'
 export type { TRole } from './RoleSchema.js'
 // === 父表 (主表) ===
@@ -18,6 +19,7 @@ export type { TProduct } from './ProductSchema.js'
 // ==============================
 // === 無關連表 ===
 export { SystemMetaSchema } from './SystemMetaSchema.js'
+export { ArticleSchema } from './ArticleSchema.js'
 export { UserSchema } from './UserSchema.js'
 export { RoleSchema } from './RoleSchema.js'
 // === 父表 (主表) ===
@@ -32,6 +34,7 @@ export { ProductSchema } from './ProductSchema.js'
 // ==============================
 // === 無關連表 ===
 import { SystemMetaSchema } from './SystemMetaSchema.js'
+import { ArticleSchema } from './ArticleSchema.js'
 import { UserSchema } from './UserSchema.js'
 import { RoleSchema } from './RoleSchema.js'
 // === 父表 (主表) ===
@@ -44,6 +47,7 @@ import { ProductSchema } from './ProductSchema.js'
 export const allEntities = [
   // === 無關連表 ===
   SystemMetaSchema,
+  ArticleSchema,
   UserSchema,
   RoleSchema,
   // === 父表 (主表) ===

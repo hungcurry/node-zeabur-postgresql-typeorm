@@ -1,7 +1,10 @@
-// import { DataSource } from 'typeorm'
+import { DataSource } from 'typeorm'
 import { AppDataSource, dbEntities, keepEntities } from '@/config/database.js'
 // Schema
 import {
+  // === 無關連表 ===
+  ArticleSchema,
+  // === 父表 (主表) ===
   ProfileSchema,
   CategorySchema,
   // === 子表 (從表) ===
@@ -9,6 +12,7 @@ import {
   ProductSchema,
 } from '@/models/index.js'
 // mock 假資料
+import { mockArticles } from './articles.seed.js'
 import { mockProfiles } from './profiles.seed.js'
 import { mockCategories } from './categories.seed.js'
 import { mockOrders } from './orders.seed.js'
@@ -18,12 +22,16 @@ import { mockProducts } from './products.seed.js'
  * @param allEntities 所有資料庫 Entity 列表
  * @param keepEntities 即使重新啟動 Seed也要保留不予清空的白名單
  */
-async function clearDatabaseTables(allEntities: any[], keepEntities: Set<any>) {
+async function clearDatabaseTables(
+  // prettier-ignore
+  allEntities: any[],
+  keepEntities: Set<any>,
+) {
   // ==========================================
   // 🚀1.每次重新執行 Seed 時，先清空舊資料
   // 誰有 Foreign Key，誰就是(子表)（Child）: orders / products
   // ==========================================
-  console.log('🧹 [Seeder] 正在透過 CASCADE 安全連鎖清空歷史資料...')
+  console.log('🧹 [Seeder] 正在安全清空歷史資料...')
 
   // 要清空的 Entities
   const cleanEntities = allEntities.filter((entity) => !keepEntities.has(entity))
@@ -43,7 +51,7 @@ async function clearDatabaseTables(allEntities: any[], keepEntities: Set<any>) {
       ${cleanTables.map((table) => `"${table}"`).join(', ')}
     RESTART IDENTITY CASCADE;
   `)
-  console.log('🧹 [Seeder] 歷史舊資料已成功連鎖清空！')
+  console.log('')
 }
 export async function seedMockData() {
   /** 資料初始化
@@ -51,6 +59,10 @@ export async function seedMockData() {
    * 採用資料庫交易 (Transaction) 機制，
    * 確保資料寫入的「原子性」（要嘛全成功，要嘛全失敗）
    */
+
+  console.log('')
+  console.log('🚀 開始初始化 多資料庫 / Collections...')
+  console.log('----------------------------------------')
 
   // *執行清空舊資料
   await clearDatabaseTables(dbEntities, keepEntities)
@@ -64,10 +76,13 @@ export async function seedMockData() {
   await queryRunner.startTransaction()
 
   try {
-    console.log('🚀 [Seeder] 開始開發環境預設資料...')
+    console.log('🌱 開始 Seeds 假資料...')
+    console.log('----------------------------------------')
 
     // 必須用 queryRunner 提供的 manager，才能把操作鎖定在同一個 Transaction 內
     const manager = queryRunner.manager
+    // === 無關連表 ===
+    const articleManager = manager.getRepository(ArticleSchema)
     // (父表)
     const profileManager = manager.getRepository(ProfileSchema)
     const categoryManager = manager.getRepository(CategorySchema)
@@ -79,28 +94,35 @@ export async function seedMockData() {
     // 🚀2.資料寫入 💡 因爲有外鍵約束，被合併的表(父表)必須先 寫入
     // 誰有 Foreign Key，誰就是(子表)（Child）: orders / products
     // ==========================================
+    // 無關連表
+    // prettier-ignore
+    await Promise.all([
+      articleManager.save(mockArticles),
+    ])
+    console.log('  └─ 成功寫入 Articles 假資料寫入成功！')
+
     // 寫入 Profiles / Categories(父表)
     // prettier-ignore
     await Promise.all([
-      profileManager.save(mockProfiles), 
+      profileManager.save(mockProfiles),
       categoryManager.save(mockCategories)
     ])
-    console.log('✅ [Seeder] Profiles 假資料寫入成功！')
-    console.log('✅ [Seeder] Categories 假資料寫入成功！')
+    console.log('  └─ 成功寫入 Profiles 假資料寫入成功！')
+    console.log('  └─ 成功寫入 Categories 假資料寫入成功！')
 
     // 寫入 Orders / Products(子表)
     // prettier-ignore
     await Promise.all([
-      orderManager.save(mockOrders), 
+      orderManager.save(mockOrders),
       productManager.save(mockProducts)
     ])
-    console.log('✅ [Seeder] Orders 假資料寫入成功！')
-    console.log('✅ [Seeder] Products 假資料寫入成功！')
+    console.log('  └─ 成功寫入 Orders 假資料寫入成功！')
+    console.log('  └─ 成功寫入 Products 假資料寫入成功！')
 
     // 走到這一步代表以上所有 save 都完美無誤，
     // 正式通知資料庫：「把剛才沙盒裡的內容一次性寫入硬碟！」
     await queryRunner.commitTransaction()
-    console.log('✨ [Seeder] 所有假資料已成功寫入並提交至資料庫！')
+    console.log('🎉 Seed 資料初始化完成！')
 
     // ==========================================
     // 🚀3.驗證 JOIN 結果
@@ -138,13 +160,13 @@ export async function seedMockData() {
 
     console.log('\n--- 最終產出的 Products 帶有關聯資料 ---')
     console.log(JSON.stringify(newProducts, null, 2))
-  } 
+  }
   catch (error) {
     // 中間只要任何一個步驟噴錯（不論是寫入失敗、格式不對或網路斷線），就會立刻跳到這裡。
     // 告訴資料庫：「剛剛臨時沙盒裡的紀錄全部撕掉，裝作沒發生過！」確保資料庫不會留下半殘的髒資料。
     await queryRunner.rollbackTransaction()
     console.error('⚠️ [Seeder] 執行失敗，錯誤原因:', error)
-  } 
+  }
   finally {
     // 不論最後是成功 (try) 還是失敗 (catch)，都必須關閉 queryRunner 的專屬連線，
     // 把資源還給連線池 (Connection Pool)

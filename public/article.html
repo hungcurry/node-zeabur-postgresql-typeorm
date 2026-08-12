@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Article-文章分頁</title>
+</head>
+
+<style>
+  .article-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: sans-serif;
+  }
+
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .search-bar input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  .search-bar button {
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+
+  .article-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    text-transform: capitalize;
+  }
+
+  .badge.published {
+    background-color: #d4edda;
+    color: #155724;
+  }
+
+  .badge.draft {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  .pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 30px;
+  }
+
+  .status-info {
+    color: #666;
+    text-align: center;
+    margin: 20px 0;
+  }
+
+  .status-error {
+    color: #dc3545;
+    text-align: center;
+    margin: 20px 0;
+  }
+
+  .no-data {
+    color: #999;
+    text-align: center;
+    padding: 4px 0;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+</style>
+
+<body>
+  <div class="article-container">
+    <!-- 1. 搜尋列 -->
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="請輸入關鍵字搜尋標題..." />
+      <button id="searchBtn">搜尋</button>
+    </div>
+
+    <!-- 2. 狀態提示區（載入中、錯誤訊息） -->
+    <div id="statusMessage" class="status-info" style="display: none"></div>
+
+    <!-- 3. 資料列表呈現區 -->
+    <div id="listWrapper"></div>
+
+    <!-- 4. 分頁控制軸 -->
+    <div id="paginationWrapper" class="pagination-wrapper" style="display: none">
+      <button id="prevBtn">上一頁</button>
+      <span id="pageIndicator"></span>
+      <button id="nextBtn">下一頁</button>
+    </div>
+  </div>
+</body>
+
+<script>
+  // --- 後端 API 設定 ---
+  const API_BASE_URL = 'http://localhost:8080/articles'
+  // const API_BASE_URL = 'https://node-zeabur-postgresql-typeorm.zeabur.app/articles'
+
+  // --- 前端分頁與搜尋狀態管理 (純 JS 全域變數) ---
+  let currentPage = 1
+  const limit = 3
+  let searchKeyword = ''
+  let totalPages = 1
+
+  // --- 抓取 DOM 節點 ---
+  const searchInput = document.getElementById('searchInput')
+  const searchBtn = document.getElementById('searchBtn')
+  const statusMessage = document.getElementById('statusMessage')
+  const listWrapper = document.getElementById('listWrapper')
+  const paginationWrapper = document.getElementById('paginationWrapper')
+  const prevBtn = document.getElementById('prevBtn')
+  const nextBtn = document.getElementById('nextBtn')
+  const pageIndicator = document.getElementById('pageIndicator')
+
+  // --- 核心業務邏輯：向後端請求資料 ---
+  async function fetchArticles() {
+    showStatus('資料載入中...', 'info')
+    listWrapper.innerHTML = ''
+    paginationWrapper.style.display = 'none'
+
+    try {
+      // 1. 組裝 Query String 網址參數
+      const url = new URL(API_BASE_URL)
+      url.searchParams.append('page', currentPage)
+      url.searchParams.append('limit', limit)
+      if (searchKeyword) {
+        url.searchParams.append('search', searchKeyword)
+      }
+
+      // 2. 發送 API 請求
+      // * /articles?page=1&limit=3&search=vue
+      // fetch(`${API_BASE_URL}/articles?page=${currentPage}&limit=${limit}&search=${searchKeyword}`)
+      const response = await fetch(url)
+      const result = await response.json()
+
+      // 修正：相容後端 status: 'success' 判斷
+      if (result.status !== 'success' && !result.success) {
+        throw new Error(result.message || '無法取得資料')
+      }
+
+      hideStatus()
+
+      // 修正：精準拆解 result.data 結構
+      const articles = result.data?.articles || (Array.isArray(result.data) ? result.data : [])
+      const pagination = result.data?.pagination || result.pagination || {}
+
+      // 3. 渲染畫面
+      renderArticles(articles)
+      renderPagination(pagination)
+
+    }
+    catch (error) {
+      console.error('讀取文章失敗:', error)
+      showStatus(error.message || '系統發生錯誤，請稍後再試', 'error')
+    }
+  }
+
+  // --- 畫面渲染：文章列表 ---
+  function renderArticles(articles) {
+    if (!articles || articles.length === 0) {
+      listWrapper.innerHTML = '<div class="no-data">查無對應文章資料</div>'
+      return
+    }
+
+    listWrapper.innerHTML = articles
+      .map(
+        (item) => `
+          <div class="article-card">
+            <h3>${escapeHtml(item.title)}</h3>
+            <p>${escapeHtml(item.content)}</p>
+            <div class="meta">
+              <span class="badge ${escapeHtml(item.status)}">${escapeHtml(item.status)}</span>
+            </div>
+          </div>
+        `,
+      )
+      .join('')
+  }
+
+  // --- 畫面渲染：分頁按鈕與數字 ---
+  function renderPagination(paginationData = {}) {
+    // 假設先傳來
+    // data: {
+    //   articles,
+    //   pagination: {
+    //     totalCount,           // 12  總資料
+    //     totalPages,           // 4   總頁數
+    //     currentPage: page,    // 1   當前頁數
+    //     limit,                // 3   當頁幾筆資料
+    //     hasNextPage,          // true  下一頁
+    //     hasPrevPage,          // false 上一頁
+    //   },
+    // },
+    //-----------------------------------------------------
+    // 1. 從 API 回傳的資料解構出屬性 (這裡給予 api 屬性預設值)
+    const {
+      totalCount = 0,
+      totalPages: pageTotal = 1,
+      currentPage: pageCurrent = 1,
+      hasPrevPage = false,
+      hasNextPage = false,
+    } = paginationData
+
+    // 2.【關鍵修正】明確更新全域變數狀態！
+    totalPages = pageTotal
+    currentPage = pageCurrent
+
+    // 防錯：確保 DOM 存在
+    if (!paginationWrapper) return
+
+    // 總頁數 <= 1 時不顯示分頁列
+    if (totalPages <= 1) {
+      paginationWrapper.style.display = 'none'
+      return
+    }
+
+    // 3. 渲染 UI
+    paginationWrapper.style.display = 'flex'
+    if (prevBtn) prevBtn.disabled = !hasPrevPage
+    if (nextBtn) nextBtn.disabled = !hasNextPage
+    if (pageIndicator) {
+      pageIndicator.textContent = `第 ${currentPage} / ${totalPages} 頁 (共 ${totalCount} 筆)`
+    }
+  }
+
+  // --- 輔助工具函式 ---
+  function showStatus(msg, type) {
+    statusMessage.textContent = msg
+    statusMessage.className = type === 'error' ? 'status-error' : 'status-info'
+    statusMessage.style.display = 'block'
+  }
+
+  function hideStatus() {
+    statusMessage.style.display = 'none'
+  }
+
+  // 防禦 XSS 轉義處理
+  function escapeHtml(str) {
+    if (!str) return ''
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+  }
+
+  // --- 事件監聽 (Event Listeners) ---
+  searchBtn.addEventListener('click', () => {
+    searchKeyword = searchInput.value.trim()
+    currentPage = 1
+    fetchArticles()
+  })
+
+  searchInput.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+      searchBtn.click()
+    }
+  })
+
+  prevBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--
+      fetchArticles()
+    }
+  })
+
+  nextBtn.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+      currentPage++
+      fetchArticles()
+    }
+  })
+
+  // 初始載入
+  document.addEventListener('DOMContentLoaded', fetchArticles)
+</script>
+
+</html>

@@ -3,8 +3,8 @@ import cors from 'cors'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { httpLogger } from './utils/logger.js'
-import { handleNotFound, handleGlobalError } from './middlewares/errorHandle.js'
 import { swaggerDocs, swaggerUi } from './/utils/swagger.js'
+import { handleNotFound, handleGlobalError } from './middlewares/errorHandle.js'
 // type
 import type { Application, Request, Response, NextFunction } from 'express'
 // router
@@ -13,27 +13,41 @@ import roleRoutes from './routes/roleRouter.js'
 import todoRoutes from './routes/todoRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import productRoutes from './routes/productRoutes.js'
+import articleRoutes from './routes/articleRoutes.js'
 
+// ===================
+// ... CORS配置 ...
+// ===================
 // 定義 app 為 Express Application 型別
 const app: Application = express()
-
-// *中間件
 // 自動處理 OPTIONS 請求與 CORS Header
+// 預設無帶參數: 允許所有來源*
 app.use(cors())
-// 解析 JSON 格式 (如 Axios)
-app.use(express.json())
-// 解析 Form 格式 (如藍新通知)
-app.use(express.urlencoded({ extended: false }))
-// Logger 配置
+
+// ===================
+// ... 中間件 ...
+// ===================
+// 解析 JSON (如 Axios，設定大小限制，防止攻擊導致記憶體溢位)
+app.use(express.json({ limit: '1mb' }))
+// 解析 Form (如藍新通知)
+app.use(express.urlencoded({ extended: false, limit: '1mb' }))
+// 解析Logger 配置
 app.use(httpLogger)
 // 設定靜態檔案資料夾
 // 1. 手動模擬 __dirname (ESM 必備動作)
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 // 2. 設定靜態檔案資料夾
+// resolve: 用現在檔案當起點，往上跳一層，再進 server/public
+// const publicPath = resolve(__dirname, '..', 'server', 'public')
+// app.use(express.static(publicPath))
+// ---
+// join: 用現在檔案當路徑，路徑直接合併'public'
 app.use(express.static(path.join(__dirname, 'public')))
 
-// *Router
+// ===================
+// ... Router ...
+// ===================
 // app.get：直接定義單一路由
 // app.use：引入外部路由模組（Router）
 // 偵錯 Header
@@ -49,8 +63,6 @@ app.get('/', (req: Request, res: Response) => {
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok' })
 })
-// Swagger UI 提供靜態 API 文檔頁面
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
 app.get('/test', (req, res) => {
   res.json({ ok: true })
 })
@@ -61,6 +73,13 @@ app.use('/roles', roleRoutes)
 app.use('/todos', todoRoutes)
 app.use('/auth', authRoutes)
 app.use('/products', productRoutes)
+app.use('/articles', articleRoutes)
+// Swagger UI 提供靜態 API 文檔頁面
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
+
+// ===================
+// ... Error ...
+// ===================
 // 錯誤處理,放在所有路由之後
 app.use(handleNotFound)
 app.use(handleGlobalError)

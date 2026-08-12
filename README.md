@@ -52,6 +52,37 @@ npm run clean:port
 }
 ```
 
+> 檔案順序
+
+```jsx
+口訣: indexjs 從上到下 先看import的檔案順序
+// 1. database.js：index.js 引用 app.js ➔ app.js 引用 Routes/Controllers ➔ 
+//    Controllers 最先深層引用了 database.js，故優先執行。
+// 2. app.js：底層依賴 database.js 執行完畢後，回到 app.js 完成剩餘的模組初始化。
+// 3. connectDB.js：index.js 接著引用 connection.js，
+//    此時 database.js 已快取不重複執行，直接完成連線模組初始化。
+// 4. index.js：所有被 import 的子模組全部載入完畢後，進入點主程式最後開始執行。
+
+
+1. npm run dev
+// ------
+// console 寫在 (Top-level)
+初始流程:  檔案載入順序 
+databases.js => todoxxller.js => todoRoute.js => app.js => conn.js => index.js
+
+2. 走router觸發
+// ------
+// console 寫在 (Function 內部) 
+// 因為走API 會先從 Router(app.js 的 req 那邊) 觸發
+API流程:  邏輯執行順序
+app.req/函式內.js => controller/函式內.js
+// 測試寫法: 
+// app.use('/todos', (req, res, next) => {
+//   console.log('app.req/函式內.js')
+//   todoRoutes(req, res, next)
+// })
+```
+
 > 網址
 
 ```jsx
@@ -77,7 +108,7 @@ https://node-zeabur-postgresql-typeorm.zeabur.app/api-docs
 
 // 🚀 本機 使用postman 測試
 // ---
-使用本地資料庫: todo / product
+使用本地資料庫: todo / product / article
 
 // PORT=8080
 http://localhost:8080/todos
@@ -87,6 +118,13 @@ http://localhost:8080/todos
 http://127.0.0.1:5500/public/products.html
 
 http://localhost:8080/products
+
+
+// 測試前端分頁
+**使用article.html 測試**
+http://127.0.0.1:5500/public/article.html
+
+http://localhost:8080/articles
 ```
 
 > 時間格式
@@ -556,6 +594,7 @@ synchronize: false
 // 2. 建立藍圖
 npm run migration:generate AddEmailToUser
 // npm run migration:generate SystemMetaSchema
+// npm run migration:generate AddArticleSchema
 
 // 3.node執行序,會報錯誤 產生檔案 加上 type
 import type { MigrationInterface, QueryRunner } from "typeorm"
