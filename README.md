@@ -27,18 +27,42 @@ postgresql://root:RDU560JAVsZE92m17Pg4nSlN3zMXbQK8@43.163.206.9:32050
 // MongoDB =>  MongoDB Compass
 // Postgres => DBeaver
 
-// 啟動資料庫（背景執行）
-docker-compose up -d
-
-// 停止資料庫（保留資料）
-docker-compose down
-
-// 重置資料庫（刪volume）
-docker-compose down -v
-
+// 全體專案 停止與刪除容器
+docker compose down
+// 全體專案 停止與刪除容器 / 資料Volume
+docker compose down -v
+// 全體專案 停止與刪除容器 / 資料Volume/ Image
+docker compose down -v --rmi all
+// 全體專案 啟動
+docker compose up -d
 // 查看目前運行狀態
 docker-compose ps
 
+// 單一服務 : 啟動與刪除
+// --------------------------------------------
+// 單一服務：刪除 (Delete)
+// --------------------------------------------
+// 刪除 [資料庫] (包含容器與 DB 資料 Volume)
+docker compose stop postgres && docker compose rm -f postgres && docker volume rm postgres_TypeORM
+// 刪除 [前端] 容器
+docker compose stop frontend && docker compose rm -f frontend
+// 刪除 [後端] 容器
+docker compose stop backend && docker compose rm -f backend
+//  --------------------------------------------
+// 單一服務：啟動 (Start / Build)
+// --------------------------------------------
+// 啟動 [資料庫]
+docker compose up postgres -d
+// 啟動/更新 [前端] (加上 --build 確保程式碼更動有生效)
+docker compose up frontend -d --build
+// 啟動/更新 [後端] (加上 --build 確保程式碼更動有生效)
+docker compose up backend -d --build
+
+// ~這專案直接用(包含前後端所有服務)
+// 重置all +資料庫（刪volume）
+docker compose down -v
+// 啟動all +資料庫（背景執行）
+docker compose up -d
 
 // 🚀 8080 指令
 // ---
