@@ -385,6 +385,7 @@ export async function seedMockData() {
 }
 ```
 
+
 ### ORM 框架-Prisma
 
 > 指令
@@ -536,9 +537,11 @@ async function runCRUD() {
 runCRUD()
 ```
 
+
 ### 4套 JOIN 差異寫法
 
-#### 原理
+#### (一).原理
+---
 
 ```jsx
 MongoDB:
@@ -555,7 +558,9 @@ ORM 2種:
 // SQL JOIN 才發生
 ```
 
-#### MongoDB lookup 寫法
+
+#### (二).MongoDB lookup 寫法
+---
 
 ```jsx
 // orders集合
@@ -600,7 +605,9 @@ db.orders.aggregate([
 ]
 ```
 
-#### PostgreSQL JOIN 寫法
+
+#### (三).PostgreSQL JOIN 寫法
+---
 
 ```jsx
 // PostgreSQL 會把 未加引號的名稱全部轉小寫
@@ -681,7 +688,9 @@ INNER JOIN users
 
 ```
 
-#### TypeORM JOIN 寫法
+
+#### (四).TypeORM JOIN 寫法
+---
 
 > 原理定義
 
@@ -887,7 +896,9 @@ profiles: [
 ]
 ```
 
-#### Prisma JOIN 寫法
+
+#### (五).Prisma JOIN 寫法
+---
 
 > 原理定義
 

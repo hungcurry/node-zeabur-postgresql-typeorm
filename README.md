@@ -1,6 +1,6 @@
 ## 專案快速啟動
 
-#### node-zeabur-postgresql-typeorm
+### node-zeabur-postgresql-typeorm
 
 > 指令
 
@@ -151,50 +151,6 @@ http://127.0.0.1:5500/public/article.html
 http://localhost:8080/articles
 ```
 
-> 時間格式
-
-```jsx
-// ==============================
-// Timestamp  ( UTC+0 )
-// ==============================
-Date.now()
-// 型別
-number
-// 範例
-1781245804387（13 位數）毫秒
-
-// 說明
-// 自 1970-01-01T00:00:00.000Z (Unix Epoch)
-// 起算經過的毫秒數
-
-// ==============================
-// Date Object
-// ==============================
-new Date()
-// 型別
-Date (object)
-// 範例
-Fri Jun 12 2026 14:33:53 GMT+0800 (台北標準時間)
-
-// 說明
-// JavaScript 原生日期物件
-// 可進行日期計算、格式轉換等操作
-
-// ==============================
-// ISO 8601 ( UTC+0 )
-// ==============================
-new Date().toISOString()
-// 型別
-string
-// 範例
-"2026-06-12T06:32:21.085Z"
-
-// 說明
-// 國際標準日期時間格式
-// Z = UTC 時區
-// 常用於 API、JSON、資料庫儲存與傳輸
-```
-
 > 資料庫的位置
 
 ```jsx
@@ -207,7 +163,9 @@ ports:
 ```
 
 
-#### 專案架構
+### 專案架構
+
+> 架構
 
 ```jsx
 node-zeabur-postgresql-typeorm/
@@ -240,7 +198,9 @@ node-zeabur-postgresql-typeorm/
 ```
 
 
-#### 指令安裝
+### 指令安裝
+
+> 安裝
 
 ```jsx
 // TypeORM 專案依賴安裝指令
@@ -251,6 +211,7 @@ npm install express cors dotenv cross-env bcryptjs jsonwebtoken pg reflect-metad
 npm install -D typescript tsx nodemon tsc-alias pino-pretty @types/node @types/express @types/cors @types/pg @types/bcryptjs @types/jsonwebtoken @types/swagger-jsdoc @types/swagger-ui-express
 ```
 
+> script
 
 ```jsx
 "scripts": {
@@ -262,7 +223,404 @@ npm install -D typescript tsx nodemon tsc-alias pino-pretty @types/node @types/e
 ```
 
 
-#### TS @路徑問題
+### 時間格式
+
+> 時間格式
+
+```jsx
+2026 年 8 月 18 日 上午 9:20
+// ==============================
+// Timestamp  ( UTC+0 )
+// ==============================
+Date.now()
+// 型別
+number
+// 範例
+1787016000000（13 位數）毫秒
+
+// 說明
+// 自 1970-01-01T00:00:00.000Z (Unix Epoch)
+// 起算經過的毫秒數
+
+// ==============================
+// Date Object
+// ==============================
+new Date()
+// 型別
+Date (object)
+// 範例
+Tue Aug 18 2026 09:20:00 GMT+0800 (台北標準時間)
+
+// 說明
+// JavaScript 原生日期物件
+// 可進行日期計算、格式轉換等操作
+
+// ==============================
+// ISO 8601 ( UTC+0 )
+// ==============================
+new Date().toISOString()
+// 型別
+string
+// 範例
+"2026-08-18T01:20:00.000Z"
+
+// 說明
+// 國際標準日期時間格式
+// Z = UTC 時區
+// 常用於 API、JSON、資料庫儲存與傳輸
+```
+
+> 標準流程
+
+```jsx
+核心規範清單
+1. DB Schema（資料庫設計）
+* PostgreSQL：全專案時間欄位一律定義為 timestamptz（強制 UTC+0 儲存）。
+* MongoDB：欄位型態一律使用原生 Date，Schema 開啟 { timestamps: true }。
+
+2. Backend（後端寫入/邏輯）
+* 建立與更新時間：一律傳入 JavaScript 原生 new Date() 物件。
+* ⚠️ 禁止事項：寫入 ORM 時禁止手動傳入 new Date().toISOString() 字串，
+  防止無時區欄位發生二次時區偏移。
+
+3. API 傳輸層
+* 統一格式：回傳給前端的時間欄位，一律序列化為標準 ISO 8601 UTC 字串
+ （帶結尾 Z，例如 2026-08-14T08:12:47.000Z）。 => // UTC+0
+
+4. Frontend（前端畫面渲染）
+* 責任歸屬：前端拿到 UTC 字串後，僅在「渲染到 UI」時使用日期工具庫
+ （如 Day.js）轉為使用者當前時區（如 UTC+8）顯示。
+* 範例：dayjs(item.paidAt).format('YYYY-MM-DD HH:mm:ss')。
+
+結論
+---
+API:網址
+http://localhost:8080/api/coaches/skill
+
+* 資料庫底層存儲（UTC+0）：2026-08-17 06:22:06.915
+// 這邊 只是為了方便觀看UI 轉UTC+8 ( 資料庫還是 +0 )
+* DBeaver（本地 UTC+8）：2026-08-17 14:22:06.915
+* API 回傳（標準 ISO 8601 UTC+0）："2026-08-17T06:22:06.915Z"
+```
+
+> 資料庫差異
+
+```jsx
+假設台灣時間 9:20
+09:20:36.503 +08:00
+
+
+1. PostgreSQL (TypeORM / Prisma)
+推薦全專案欄位統一改為 `timestamptz`
+
+自動產生的 : createdAt: ( UTC+0 )
+
+手動傳入的 : paid_at: new Date() ( Date 物件，代表 09:20:00 台灣這個時間點 )
+            // Fri Aug 14 2026 09:20:49 GMT+0800 (台北標準時間) {}
+            // ⚠️ Date 本身不保存台灣時區
+            paid_at: new Date().toISOString() ( UTC+0 ISO 8601 )
+            // 2026-08-14T01:20:00.000Z  => 有時區 UTC+0
+          
+// !地雷地方 : timestamp
+// ❌ 09:20:00 (被誤補 +8 小時)
+type : `timestamp` 不能搭配 new Date().toISOString()
+new Date().toISOString() 會產生 2026-08-14T01:20:36.503Z 這邊都是對的
+然後交給 PostgreSQL 遇到 timestamp (無時區)
+PostgreSQL 需要把這個「帶有 UTC 時區的時間」塞進一個
+沒有時區的 timestamp
+所以會依 PostgreSQL session timezone 做轉換
+Asia/Taipei 是 UTC + 8
+所以 轉成UTC + 8
+2026-08-14T01:20:36.503Z
+              ↓
+       + 8 小時
+              ↓
+2026-08-14 09:20:36.503
+最後 timestamp 裡面只剩：
+2026-08-14 09:20:36.503
+// --------
+寫入 : 轉成 UTC+0 時間 儲存
+// 讀取時可根據 Session 時區自動轉換 (timezone)
+// 如果連線時區是 Asia/Taipei（+08:00），
+// PostgreSQL 就會把底層存的 UTC 時間加上 8 小時展示給你看
+看UI : UTC+8 (方便給人看得)
+讀出 : 維持 UTC+0
+
+
+2. MongoDB (Mongoose)
+欄位型態直接使用原生 Date
+`timestamps: true`
+{
+  // 對應資料表名稱 ( 複數 + snake_case + 小寫 )
+  collection: 'users',
+  // 自動處理 createdAt, updatedAt
+  timestamps: true,
+},
+
+自動產生的 : createdAt ( UTC+0 )
+手動傳入的 : new Date() 或 ISO 字串皆可 ( UTC+0 )
+// --------
+轉成 UTC+0  儲存 (64-bit 毫秒整數)
+寫入 : 轉成 UTC+0 時間 儲存
+看UI : UTC+0 (方便給人看得)
+讀出 : 維持 UTC+0 時間 給你
+
+
+結論: 資料庫存同一個 保存時間點（Instant）
+PostgreSQL：型態有分 
+timestamp（無時區，易踩雷）
+timestamptz（帶時區，推薦）。
+
+MongoDB：沒有型態選擇問題，原生 Date / ISODate 
+就是強制鎖定 UTC+0，設定 timestamps: true 即可直接符合標準規範。
+// UTC+0
+// 2026-08-14 01:20:00+00
+// UTC+8
+// 2026-08-14 09:20:00+08
+// 這兩個：是同一個時間點（Instant）別糾結
+```
+
+> 各資料庫寫法
+
+```jsx
+2026/8/18 9:20分
+---
+* Date.now()：
+// 1787016000000
+* new Date()（以字串表示）：
+// Tue Aug 18 2026 09:20:00 GMT+0800 (台北標準時間)
+* new Date().toISOString()：
+// 2026-08-18T01:20:00.000Z
+
+
+// ==============================
+// Mongose
+// ==============================
+Timestamp  =>  1787016000000 (毫秒-number)
+----
+export const orderSchema = new Schema<TOrder>(
+  {
+    // Timestamp  =>  1787016000000 (毫秒-number)
+    // ----------
+    // 💡 手動定義時間戳記欄位為 Number
+    // 不交給 Mongoose 自動管理
+    createdAt: {
+      type: Number,
+      required: true,
+    },
+    updatedAt: {
+      type: Number,
+      required: true,
+    },
+  },
+  {
+    // 自動處理 createdAt, updatedAt
+    // 預設: true 會產生 格式: 2026-01-01T00:00:00.000Z
+    // 💡 關鍵：關閉自動 timestamps，
+    // 改由我們在假資料或業務邏輯中手動帶入
+    timestamps: false,
+  },
+)
+// type
+export type TOrder = {
+  // Timestamp  =>  1787016000000 (毫秒-number)
+  // ----------
+  createdAt: number
+  updatedAt: number
+}
+// seed
+export const mockOrders: TOrder[] = [
+  {
+    // Timestamp
+    // Date.now() => 1787016000000 (毫秒-number)
+    // --------
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+]
+
+
+// * 現在主流用這方式
+ISO 8601 => "2026-06-12T06:08:46.000Z"
+---
+export const productSchema = new Schema<TProduct>(
+  {
+    // ISO 8601 => "2026-06-12T06:08:46.000Z"
+    // ----------
+    // 💡 註：在 Mongoose 中，底下的 timestamps: true
+    // 會自動產生與維護 createdAt 和 updatedAt
+    不需要寫
+    // createdAt:
+    // updatedAt:
+  },
+  {
+    // 自動處理 createdAt, updatedAt
+    // 預設: true 會產生 格式: 2026-01-01T00:00:00.000Z
+    // 💡 關鍵：關閉自動 timestamps，
+    // 改由我們在假資料或業務邏輯中手動帶入
+    timestamps: true,
+  },
+)
+// type
+export type TProduct = {
+  // ISO 8601
+  // Date (object) => Fri Jun 12 2026 14:33:53 GMT+0800
+  // 然後Mongoose 自己會再轉 2026-06-12T06:08:46.000Z
+  // ----------
+  createdAt: Date
+  updatedAt: Date
+}
+// seed
+export const mockProducts: TProduct[] = [
+  {
+    // ISO 8601
+    // new Date() => Date (object)
+    // 然後Mongoose 自己會再轉.toISOString()
+    // => '2026-06-12T06:08:46.000Z' (string)
+    // --------
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+]
+
+
+// ==============================
+// Typeorm  Schema
+// ==============================
+Timestamp  =>  1787016000000 (毫秒-number)
+----
+// 自訂義函式
+const bigintTransformer = {
+  // bigint 透過 pg 驅動讀取時會回傳字串
+  // 例如："1781248003298"
+  // 使用 transformer 將字串轉成 number
+  to: (value?: number) => value,
+  from: (value: string) => Number(value),
+}
+columns: {
+  createdAt: {
+    type: 'bigint',
+    transformer: bigintTransformer,
+  },
+  updatedAt: {
+    type: 'bigint',
+    transformer: bigintTransformer,
+  },
+},
+// type
+export type TProduct = {
+  // Timestamp  =>  1787016000000 (毫秒-number)
+  // ----------
+  createdAt: number
+  updatedAt: number
+}
+// seed
+export const mockOrders: TOrder[] = [
+  {
+    // Timestamp
+    // Date.now() => 1787016000000 (毫秒-number)
+    // --------
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+]
+
+
+// * 現在主流用這方式
+ISO 8601 => "2026-06-12T06:08:46.000Z"
+---
+columns: {
+  createdAt: {
+    // DB 自動產生建立時間
+    type: 'timestamptz',
+    createDate: true,
+    nullable: false,
+  },
+  updatedAt: {
+    // DB 更新時自動刷新
+    type: 'timestamptz',
+    updateDate: true,
+    nullable: false,
+  },
+},
+// type
+export type TProduct = {
+  // ISO 8601
+  // Date (object) => 
+  // Tue Aug 18 2026 09:20:00 GMT+0800 (台北標準時間)
+  // 然後TypeOrm 自己會再轉 
+  // 2026-08-18T01:20:00.000Z
+  // ----------
+  createdAt: Date
+  updatedAt: Date
+}
+// seed
+export const mockOrders: TOrder[] = [
+  {
+    // ISO 8601
+    // new Date() => Date (object)
+    // 然後TypeOrm 自己會再轉.toISOString()
+    // => '2026-06-12T06:08:46.000Z' (string)
+    // --------
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+]
+
+
+// ==============================
+// Prisma
+// ==============================
+Timestamp  =>  1787016000000 (毫秒-number)
+----
+// createdAt BigInt @map("created_at")
+// updatedAt BigInt @map("updated_at")
+// 但這樣 不會自動 now() / 自動更新。
+// 所以還是要用 標準作法
+// *方法和ISO 8601 一樣
+
+// 然後：
+const newOrders = await prisma.order.findMany({
+  include: {
+    profile: true, // 對應 : profile: 虛擬要連結用的欄位
+  },
+})
+// 
+// Prisma出來永遠是
+// createdAt: Date : "2026-06-16T03:39:33.493Z"
+// 要手動轉格式.getTime() 才能變時間格式 => 1781581173493
+const plainOrders = newOrders.map((order) => ({
+  ...order,
+  createdAt: order.createdAt.getTime(),
+  updatedAt: order.updatedAt.getTime(),
+}))
+// DB       → timestamptz
+// Prisma   → Date
+// API      → timestamp (number)
+
+
+ISO 8601 => "2026-06-12T06:08:46.000Z"
+---
+model Order {
+  // @default(now())：對應 TypeORM 的 createDate: true，在建立資料時自動填入當前時間。
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  // @updatedAt：對應 TypeORM 的 updateDate: true，在資料有任何更新時自動刷新時間。
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+}
+// seed
+export const mockOrders: Order[] = [
+  {
+    // Prisma 只能寫 Date物件 new Date()
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+]
+```
+
+
+### TS @路徑問題
+
+> @路徑解析
 
 ```jsx
 // 前端有Vite幫我們做到 @路徑解析
@@ -289,6 +647,7 @@ npm install -D tsc-alias
   },
 ```
 
+> js 副檔名
 
 ```jsx
 // ~為啥這專案的路徑 都要寫.js
@@ -304,52 +663,12 @@ npm install -D tsc-alias
 ```
 
 
-#### Zeabur開PostgreSQL資料表 注意事項
+### TypeOrm 注意事項
 
-> 重新產生 Prisma Client
+#### (一).Schema 設定
+---
 
-```jsx
-// 修改完 本地 schema.prisma 後，請務必在專案終端機執行：
-npx prisma generate
-```
-
-> 雲端建立方法1-UI 介面手動填寫
-
-```jsx
-// 遞增數字
-id屬性 型別：int
-database.default (預設值)：留空
-database.constraint (約束)：GENERATED ALWAYS AS IDENTITY
-
-// UUID
-id屬性 型別：text
-database.default (預設值)：  gen_random_uuid()
-database.constraint (約束)： PRIMARY KEY
-```
-
-![資料表建立錯誤](./src/images/database-ui.png)
-
-> 雲端建立方法2-用SQL語法建立
-
-```SQL
-// users
--- 1. 先把原本那張被網頁 UI 搞壞的表徹底刪除
-DROP TABLE IF EXISTS users;
-
--- 2. 用最純正的 PostgreSQL 語法，直接建立帶有自動遞增與主鍵的表
-CREATE TABLE users (
-    -- id SERIAL PRIMARY KEY,
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), --型別是 UUID
-    name TEXT NOT NULL,
-    age INT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'user'
-);
-```
-
-
-#### TypeOrm 注意事項
-
-* 新建立 Schema
+> 新建立 Schema
 
 ```jsx
 // models/ 新建立 XyyyyySchema.ts
@@ -361,7 +680,9 @@ entities: [ UserSchema, OrderSchema, ProfileSchema, ProductSchema ],
 ```
 
 
-* 單向/雙向關聯
+#### (二).單向/雙向關聯
+---
+
 > 單向關聯
 
 ```jsx
@@ -415,7 +736,6 @@ relations: {}
   }
 ]
 ```
-
 
 > 雙向關聯
 
@@ -485,7 +805,7 @@ relations: {
 ```
 
 
-#### Migration 
+### Migration 
 
 > 指令
 
@@ -497,7 +817,6 @@ npm install -D typescript tsx @types/node @types/pg
 // 使用這段 減少產生migration命名
 "migration:generate": "node scripts/generate-migration.mjs",
 ```
-
 
 ```jsx
 "scripts": {
@@ -523,7 +842,6 @@ npm install -D typescript tsx @types/node @types/pg
 // migration:run 👉 把「推上來的 未執行的 migration」全部套用
 ```
 
-
 > 開發流（Workflow）
 
 1. 本地開發開發
@@ -534,12 +852,10 @@ synchronize 是 true，
 本機資料庫自動隨你變更。
 ```
 
-
 2. 初始化Migration
 ```jsx
 確保設定檔中 synchronize: false
 ```
-
 
 3. 清空資料庫
 ```jsx
@@ -553,7 +869,6 @@ docker compose down -v
 // 立刻啟動一個「全新、全空」的資料庫
 docker compose up -d
 ```
-
 
 4. 初始化 對著「空資料庫」拍快照
 ```jsx
@@ -576,7 +891,6 @@ import type { MigrationInterface, QueryRunner } from "typeorm"
 npm run migration:run
 ```
 
-
 5. 檢查與大功告成
 ```jsx
 database.ts 程式碼中的  
@@ -590,7 +904,6 @@ database.ts 程式碼中的
 // 重新啟動 假資料灌入
 npm run dev 
 ```
-
 
 6. Zeabur雲端
 ```jsx
@@ -606,7 +919,6 @@ Zeabur 接手： 雲端執行：Zeabur 執行新設定的 start 指令
   }
 }
 ```
-
 
 7. 之後重複版控
 ```jsx
@@ -657,7 +969,6 @@ npm run migration:run
 5. 刪除掉本機 /src/migrations/AddEmailToUser*.ts
 6. 啟動專案：執行 npm run dev
 ```
-
 
 8. 流程圖
 ```jsx
@@ -720,3 +1031,47 @@ npm run migration:run
       │ (絕不重置！安全補齊預設資料)│
       └────────────────────────┘
 ```
+
+
+### Zeabur開PostgreSQL資料表 注意事項
+
+> 重新產生 Prisma Client
+
+```jsx
+// 修改完 本地 schema.prisma 後，請務必在專案終端機執行：
+npx prisma generate
+```
+
+> 雲端建立方法1-UI 介面手動填寫
+
+```jsx
+// 遞增數字
+id屬性 型別：int
+database.default (預設值)：留空
+database.constraint (約束)：GENERATED ALWAYS AS IDENTITY
+
+// UUID
+id屬性 型別：text
+database.default (預設值)：  gen_random_uuid()
+database.constraint (約束)： PRIMARY KEY
+```
+
+![資料表建立錯誤](./src/images/database-ui.png)
+
+> 雲端建立方法2-用SQL語法建立
+
+```SQL
+// users
+-- 1. 先把原本那張被網頁 UI 搞壞的表徹底刪除
+DROP TABLE IF EXISTS users;
+
+-- 2. 用最純正的 PostgreSQL 語法，直接建立帶有自動遞增與主鍵的表
+CREATE TABLE users (
+    -- id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), --型別是 UUID
+    name TEXT NOT NULL,
+    age INT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'user'
+);
+```
+
