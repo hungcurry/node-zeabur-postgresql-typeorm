@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>健身方案選購 - Fitness Plans</title>
+</head>
+
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+      sans-serif;
+  }
+
+  body {
+    background-color: #f3f4f6;
+    color: #1f2937;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 1024px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 8px;
+  }
+
+  header p {
+    font-size: 0.95rem;
+    color: #6b7280;
+  }
+
+  /* 方案卡片清單 (RWD Grid) */
+  .plans-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (min-width: 768px) {
+    .plans-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  /* 卡片樣式 */
+  .plan-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.05),
+      0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid #e5e7eb;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .plan-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  }
+
+  .plan-header {
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+
+  .plan-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+  }
+
+  .plan-price {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2563eb;
+  }
+
+  .plan-price span {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 400;
+  }
+
+  .plan-desc {
+    font-size: 0.9rem;
+    color: #4b5563;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    flex-grow: 1;
+  }
+
+  /* 按鈕樣式 */
+  .btn-submit {
+    width: 100%;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    touch-action: manipulation;
+  }
+
+  .btn-submit:hover {
+    background-color: #1d4ed8;
+  }
+
+  .btn-submit:active {
+    background-color: #1e40af;
+  }
+
+  .btn-submit:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  /* 載入與錯誤狀態 */
+  .status-msg {
+    text-align: center;
+    font-size: 1rem;
+    color: #6b7280;
+    padding: 40px 0;
+    grid-column: 1 / -1;
+  }
+
+  .error-msg {
+    color: #dc2626;
+  }
+</style>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>選擇您的健身方案</h1>
+      <p>即刻加入訓練，享受專業教練與設施服務</p>
+    </header>
+
+    <main id="plans-container" class="plans-grid">
+      <div class="status-msg">正在載入方案資訊...</div>
+    </main>
+  </div>
+</body>
+
+<script>
+  const API_BASE_URL = 'http://localhost:8080'
+  // 課程方案: http://localhost:8080/course_plans
+  // 訂單方案: http://localhost:8080/orders/creditPackageId
+  // -----
+  // 付款頁
+  // http://127.0.0.1:5500/public/payment-plans.html
+  // 結果頁
+  // http://127.0.0.1:5500/public/payment-result.html
+
+  // 1. API 封裝
+  const FitnessAPI = {
+    async getPlans() {
+      const res = await fetch(`${API_BASE_URL}/course_plans`)
+      if (!res.ok) throw new Error(`取得方案失敗 (Status: ${res.status})`)
+      return await res.json()
+    },
+  }
+
+  const OrderAPI = {
+    async postOrder(creditPackageId) {
+      const res = await fetch(`${API_BASE_URL}/orders/${creditPackageId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      if (!res.ok) throw new Error(`建立訂單失敗 (Status: ${res.status})`)
+      return await res.json()
+    },
+  }
+
+  // 2. 購買方案與導向藍新
+  async function buyCreditPackage(id, btnElement) {
+    try {
+      if (btnElement) {
+        btnElement.disabled = true
+        btnElement.textContent = '處理中...'
+      }
+
+      const res = await OrderAPI.postOrder(id)
+      const { status, data } = res
+      // console.log('建立訂單成功', data)
+      // 後端傳過來資料
+      // data: {
+      //   paymentGateway: newebpayConfig.payGateway,
+      //   MerchantID: newebpayConfig.merchantId,
+      //   TradeInfo: encryptedTradeInfo,
+      //   TradeSha: tradeSha,
+      //   Version: newebpayConfig.version
+      // }
+
+      if (status === 'success' && data) {
+        // 模擬藍新金流 From 表單
+        // <form id="newebpay_form" method="POST" action="https://core.newebpay.com/MPG/mpg_gateway">
+        //   <input type="hidden" name="MerchantID" value="MS12345678">
+        //   <input type="hidden" name="TradeInfo" value="abc123encrypted...">
+        //   <input type="hidden" name="TradeSha" value="sha256hash...">
+        //   <input type="hidden" name="Version" value="2.0">
+        // </form>
+
+        // 建立隱藏表單，提交到藍新金流付款頁面
+        const form = document.createElement('form')
+        form.method = 'POST'
+        form.action = data.paymentGateway
+
+        const fields = {
+          MerchantID: data.MerchantID,
+          TradeInfo: data.TradeInfo,
+          TradeSha: data.TradeSha,
+          Version: data.Version,
+        }
+
+        Object.entries(fields).forEach(([key, value]) => {
+          const input = document.createElement('input')
+          input.type = 'hidden'
+          input.name = key
+          input.value = value || ''
+          form.appendChild(input)
+        })
+
+        // 送出後立即跳轉至藍新金流頁面
+        document.body.appendChild(form)
+        form.submit()
+      }
+      else {
+        alert('建立訂單失敗，請稍後再試')
+        if (btnElement) {
+          btnElement.disabled = false
+          btnElement.textContent = '選擇方案'
+        }
+      }
+    }
+    catch (error) {
+      console.error('購買流程發生錯誤:', error)
+      alert(`結帳失敗: ${error.message}`)
+      if (btnElement) {
+        btnElement.disabled = false
+        btnElement.textContent = '選擇方案'
+      }
+    }
+  }
+
+  // 3. 渲染方案卡片
+  function renderPlans(plans) {
+    const container = document.getElementById('plans-container')
+
+    if (!plans || plans.length === 0) {
+      container.innerHTML = '<div class="status-msg">目前尚無可選方案</div>'
+      return
+    }
+
+    container.innerHTML = plans
+      .map((plan) => {
+        // 兼容常見後端欄位名稱 (id / _id, name / title, price, description / content)
+        const id = plan.id || plan._id
+        const name = plan.name || plan.title || '健身方案'
+        const price = plan.price
+          ? `$${Number(plan.price).toLocaleString()}`
+          : '$0'
+        const desc =
+          plan.description ||
+          plan.content ||
+          '包含專業教練指導與全場館設施使用權限。'
+
+        return `
+          <div class="plan-card">
+            <div class="plan-header">
+              <h2 class="plan-name">${name}</h2>
+              <div class="plan-price">${price} <span>/ 方案</span></div>
+            </div>
+            <p class="plan-desc">${desc}</p>
+            <button class="btn-submit" onclick="buyCreditPackage('${id}', this)">選擇方案</button>
+          </div>
+        `
+      })
+      .join('')
+  }
+
+  // 4. 初始化
+  async function init() {
+    const container = document.getElementById('plans-container')
+    try {
+      const result = await FitnessAPI.getPlans()
+      // 兼容回傳格式為陣列或包在 { data: [...] } 物件中
+      const plans = Array.isArray(result) ? result : result.data || []
+      renderPlans(plans)
+    }
+    catch (error) {
+      console.error('載入方案失敗:', error)
+      container.innerHTML = `
+          <div class="status-msg error-msg">
+            無法載入健身方案，請確認後端服務是否已啟動 (${error.message})
+          </div>
+        `
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', init)
+</script>
+
+</html>

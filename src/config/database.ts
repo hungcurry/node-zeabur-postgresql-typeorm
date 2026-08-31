@@ -9,14 +9,19 @@ import {
   allEntities,
   // === 無關連表 ===
   SystemMetaSchema,
+  ArticleSchema,
   UserSchema,
   RoleSchema,
   // === 父表 (主表) ===
   ProfileSchema,
   CategorySchema,
+  NpUserSchema,
+  CoursePlanSchema,
   // === 子表 (從表) ===
   OrderSchema,
   ProductSchema,
+  NpOrderSchema,
+  CreditPurchaseSchema,
 } from '../models/index.js'
 // type
 import type { DataSourceOptions } from 'typeorm'
@@ -34,18 +39,34 @@ const dbEntities = [...allEntities]
 // *開發模式本地開發（isDev）Entity 白名單（保留手動測試資料）
 // 原因: 開發模式 seedMockData()預設會先跑 TRUNCATE 清空表格,
 // 所以要寫那些表格不會被清空,保留手動測試資料(生產/開發都要保留的表格)
+// prettier-ignore
 const keepEntities = new Set([
   // 用 new Set() 意義
   // xxx.has(e) 快速查找（hash）不用掃描整個陣列
-  // ----------------
-  // 開發時保留的 : prod資料
+  // !保留資料
+// -----------
+// 簡單記法
+// 保留子 → 父也要保留 (保留子資料時，也必須保留它所依賴的父資料)
+// 保留父 → 子不用一定保留
+  // =============================
+  // *開發時保留的 : prod資料
+  // =============================
+  // === 無關連表 ===
   SystemMetaSchema, // 紀錄 seedBusinessData 初始化序號
   UserSchema,
   RoleSchema,
-  // -----------------
-  // 開發時保留的 : dev資料
-  CategorySchema,
-  ProductSchema,
+
+  // =============================
+  // *開發時保留的 : dev資料
+  // =============================
+  // === 無關連表 ===
+
+  // === 父表 (主表) ===   <---   === 子表 (從表) ===
+  CategorySchema,                   ProductSchema,// 保留
+  // newebpay
+  // 保留2張子表:NpOrder/ CreditPurchase
+  NpUserSchema,                     NpOrderSchema,// 保留
+  CoursePlanSchema,                 CreditPurchaseSchema,// 保留
 ])
 
 // 動態建立 TypeORM 配置物件的函式

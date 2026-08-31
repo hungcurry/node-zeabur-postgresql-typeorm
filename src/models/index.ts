@@ -10,9 +10,13 @@ export type { TRole } from './RoleSchema.js'
 // === 父表 (主表) ===
 export type { TProfile } from './ProfileSchema.js'
 export type { TCategory } from './CategorySchema.js'
+export type { TNpUser } from './newebpay/NpUserSchema.js'
+export type { TCoursePlan } from './newebpay/CoursePlanSchema.js'
 // === 子表 (從表) ===
 export type { TOrder } from './OrderSchema.js'
 export type { TProduct } from './ProductSchema.js'
+export type { TNpOrder } from './newebpay/NpOrderSchema.js'
+export type { TCreditPurchase } from './newebpay/CreditPurchaseSchema.js'
 
 // ==============================
 // 2. 統一導出所有的 TypeORM EntitySchema
@@ -25,9 +29,13 @@ export { RoleSchema } from './RoleSchema.js'
 // === 父表 (主表) ===
 export { ProfileSchema } from './ProfileSchema.js'
 export { CategorySchema } from './CategorySchema.js'
+export { NpUserSchema } from './newebpay/NpUserSchema.js'
+export { CoursePlanSchema } from './newebpay/CoursePlanSchema.js'
 // === 子表 (從表) ===
 export { OrderSchema } from './OrderSchema.js'
 export { ProductSchema } from './ProductSchema.js'
+export { NpOrderSchema } from './newebpay/NpOrderSchema.js'
+export { CreditPurchaseSchema } from './newebpay/CreditPurchaseSchema.js'
 
 // ==============================
 // 3. 額外打包一個陣列，方便 TypeORM DataSource 初始化時直接引入
@@ -40,9 +48,13 @@ import { RoleSchema } from './RoleSchema.js'
 // === 父表 (主表) ===
 import { ProfileSchema } from './ProfileSchema.js'
 import { CategorySchema } from './CategorySchema.js'
+import { NpUserSchema } from './newebpay/NpUserSchema.js'
+import { CoursePlanSchema } from './newebpay/CoursePlanSchema.js'
 // === 子表 (從表) ===
 import { OrderSchema } from './OrderSchema.js'
 import { ProductSchema } from './ProductSchema.js'
+import { NpOrderSchema } from './newebpay/NpOrderSchema.js'
+import { CreditPurchaseSchema } from './newebpay/CreditPurchaseSchema.js'
 
 export const allEntities = [
   // === 無關連表 ===
@@ -53,7 +65,11 @@ export const allEntities = [
   // === 父表 (主表) ===
   ProfileSchema,
   CategorySchema,
+  NpUserSchema,
+  CoursePlanSchema,
   // === 子表 (從表) ===
   OrderSchema,
   ProductSchema,
+  NpOrderSchema,
+  CreditPurchaseSchema,
 ]

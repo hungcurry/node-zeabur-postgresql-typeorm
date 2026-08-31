@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>付款結果</title>
+</head>
+
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f4f6f9;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .card {
+    background: #ffffff;
+    max-width: 480px;
+    width: 100%;
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .icon-container {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 32px;
+  }
+
+  .icon-success {
+    background-color: #e6f4ea;
+    color: #137333;
+  }
+
+  .icon-failure {
+    background-color: #fce8e6;
+    color: #c5221f;
+  }
+
+  .icon-unknown {
+    background-color: #fef7e0;
+    color: #b06000;
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .desc {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .detail-list {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  .detail-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .detail-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .detail-label {
+    color: #777;
+  }
+
+  .detail-value {
+    font-weight: 500;
+    color: #222;
+    word-break: break-all;
+  }
+
+  .action-btn {
+    display: inline-block;
+    width: 100%;
+    padding: 12px 0;
+    background-color: #0052cc;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+
+  .action-btn:hover {
+    background-color: #0747a6;
+  }
+</style>
+
+<body>
+  <div class="card" id="result-card">
+    <div class="icon-container" id="result-icon"></div>
+    <h1 class="title" id="result-title">處理中...</h1>
+    <p class="desc" id="result-desc"></p>
+
+    <div class="detail-list">
+      <div class="detail-item">
+        <span class="detail-label">訂單編號</span>
+        <span class="detail-value" id="display-order-no">-</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">交易狀態</span>
+        <span class="detail-value" id="display-status">-</span>
+      </div>
+    </div>
+
+    <a href="/" class="action-btn" id="action-btn">返回首頁</a>
+  </div>
+</body>
+
+<script>
+  (function () {
+
+    // 成功
+    // http://127.0.0.1:5500/public/payment-result.html?status=success&orderNo=17876426184540s3s
+
+    // 1. 抓取網址 query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawStatus = urlParams.get('status');
+    const orderNo = urlParams.get('orderNo');
+
+    // 2. DOM 節點
+    const iconEl = document.getElementById('result-icon');
+    const titleEl = document.getElementById('result-title');
+    const descEl = document.getElementById('result-desc');
+    const displayOrderNoEl = document.getElementById('display-order-no');
+    const displayStatusEl = document.getElementById('display-status');
+
+    // 3. 注入訂單編號
+    displayOrderNoEl.textContent = orderNo || '未提供訂單編號';
+
+    // 4. 判斷付款狀態 (常見成功關鍵字：success, SUCCESS, 1, 200, paid)
+    const statusLower = (rawStatus || '').trim().toLowerCase();
+    const isSuccess = ['success', '1', '200', 'paid', 'true'].includes(statusLower);
+
+    if (!rawStatus) {
+      // 缺少 status 參數
+      iconEl.className = 'icon-container icon-unknown';
+      iconEl.innerHTML = '&#9888;';
+      titleEl.textContent = '無法取得交易狀態';
+      descEl.textContent = '請檢查網址是否完整，或聯繫客服人員。';
+      displayStatusEl.textContent = '未知';
+    } else if (isSuccess) {
+      // 交易成功
+      iconEl.className = 'icon-container icon-success';
+      iconEl.innerHTML = '&#10003;';
+      titleEl.textContent = '付款成功';
+      descEl.textContent = '感謝您的訂購，我們已收到您的款項。';
+      displayStatusEl.textContent = '成功 (' + rawStatus + ')';
+    } else {
+      // 交易失敗
+      iconEl.className = 'icon-container icon-failure';
+      iconEl.innerHTML = '&#10005;';
+      titleEl.textContent = '付款失敗';
+      descEl.textContent = '交易未能完成，請確認信用卡資訊或重新發起支付。';
+      displayStatusEl.textContent = '失敗 (' + rawStatus + ')';
+    }
+  })();
+</script>
+
+</html>

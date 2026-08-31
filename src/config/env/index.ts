@@ -2,11 +2,27 @@ import 'dotenv/config' // 確保第一行加載環境變數
 // env
 import db from './db.js'
 import secret from './secret.js'
+import newebpay from './newebpay.js'
 const config = {
   db,
   secret,
+  newebpay,
 }
-
+/**
+ * 使用方式
+ * ------------------
+ * 1.拿單屬性
+ * const newebpayConfig = getConfig<string>('newebpay.version')
+ *
+ * 2.拿物件
+ * type TNewebpayConfig = {
+    version: string
+    payGateway: string
+    notifyUrl: string
+    .....
+ * }
+ * const newebpayConfig = getConfig<TNewebpayConfig>('newebpay')
+ */
 export const getConfig = <T = any>(path: string): T => {
   if (!path) throw new Error('Path is required')
 

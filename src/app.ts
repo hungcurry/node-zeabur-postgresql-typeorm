@@ -14,6 +14,10 @@ import todoRoutes from './routes/todoRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import productRoutes from './routes/productRoutes.js'
 import articleRoutes from './routes/articleRoutes.js'
+// newebpay
+import coursePlanRoutes from './routes/coursePlanRoutes.js'
+import orderRoutes from './routes/npOrderRoutes.js'
+import newebpayRoutes from './routes/newebpayRoutes.js'
 
 // ===================
 // ... CORS配置 ...
@@ -74,6 +78,10 @@ app.use('/todos', todoRoutes)
 app.use('/auth', authRoutes)
 app.use('/products', productRoutes)
 app.use('/articles', articleRoutes)
+// newebpay
+app.use('/course_plans', coursePlanRoutes)
+app.use('/orders', orderRoutes)
+app.use('/newebpay', newebpayRoutes)
 // Swagger UI 提供靜態 API 文檔頁面
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
 

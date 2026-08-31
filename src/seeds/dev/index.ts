@@ -7,6 +7,9 @@ import {
   // === 父表 (主表) ===
   ProfileSchema,
   CategorySchema,
+  // newebpay
+  NpUserSchema,
+  CoursePlanSchema,
   // === 子表 (從表) ===
   OrderSchema,
   ProductSchema,
@@ -17,6 +20,9 @@ import { mockProfiles } from './profiles.seed.js'
 import { mockCategories } from './categories.seed.js'
 import { mockOrders } from './orders.seed.js'
 import { mockProducts } from './products.seed.js'
+// newebpay
+import { mockNpUsers } from './npUsers.seed.js'
+import { mockCoursePlans } from './coursePlans.seed.js'
 
 /**
  * @param allEntities 所有資料庫 Entity 列表
@@ -83,10 +89,14 @@ export async function seedMockData() {
     const manager = queryRunner.manager
     // === 無關連表 ===
     const articleManager = manager.getRepository(ArticleSchema)
-    // (父表)
+    // === 父表 (主表) ===
     const profileManager = manager.getRepository(ProfileSchema)
     const categoryManager = manager.getRepository(CategorySchema)
-    // (子表 => 有外來鍵)
+    // newebpay
+    const npUserManager = manager.getRepository(NpUserSchema)
+    const coursePlanManager = manager.getRepository(CoursePlanSchema)
+
+    // // === 子表 (從表) ===(有外來鍵)
     const orderManager = manager.getRepository(OrderSchema)
     const productManager = manager.getRepository(ProductSchema)
 
@@ -96,28 +106,38 @@ export async function seedMockData() {
     // ==========================================
     // 無關連表
     // prettier-ignore
-    await Promise.all([
-      articleManager.save(mockArticles),
-    ])
-    console.log('  └─ 成功寫入 Articles 假資料寫入成功！')
+    const standaloneSeedTasks = [
+      { name: 'Articles', execute: () => articleManager.save(mockArticles) },
+    ]
+    for (const task of standaloneSeedTasks) {
+      await task.execute()
+      console.log(`  └─ 成功寫入 ${task.name} 假資料寫入成功！`)
+    }
 
     // 寫入 Profiles / Categories(父表)
     // prettier-ignore
-    await Promise.all([
-      profileManager.save(mockProfiles),
-      categoryManager.save(mockCategories)
-    ])
-    console.log('  └─ 成功寫入 Profiles 假資料寫入成功！')
-    console.log('  └─ 成功寫入 Categories 假資料寫入成功！')
+    const parentSeedTasks = [
+      { name: 'Profiles', execute: () => profileManager.save(mockProfiles) },
+      { name: 'Categories', execute: () => categoryManager.save(mockCategories) },
+      // newebpay
+      { name: 'NpUsers', execute: () => npUserManager.save(mockNpUsers) },
+      { name: 'CoursePlans', execute: () => coursePlanManager.save(mockCoursePlans) },
+    ]
+    for (const task of parentSeedTasks) {
+      await task.execute()
+      console.log(`  └─ 成功寫入 ${task.name} 假資料寫入成功！`)
+    }
 
     // 寫入 Orders / Products(子表)
     // prettier-ignore
-    await Promise.all([
-      orderManager.save(mockOrders),
-      productManager.save(mockProducts)
-    ])
-    console.log('  └─ 成功寫入 Orders 假資料寫入成功！')
-    console.log('  └─ 成功寫入 Products 假資料寫入成功！')
+    const childSeedTasks = [
+      { name: 'Orders', execute: () => orderManager.save(mockOrders) },
+      { name: 'Products', execute: () => productManager.save(mockProducts) },
+    ]
+    for (const task of childSeedTasks) {
+      await task.execute()
+      console.log(`  └─ 成功寫入 ${task.name} 假資料寫入成功！`)
+    }
 
     // 走到這一步代表以上所有 save 都完美無誤，
     // 正式通知資料庫：「把剛才沙盒裡的內容一次性寫入硬碟！」

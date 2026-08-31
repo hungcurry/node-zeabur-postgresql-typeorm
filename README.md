@@ -665,8 +665,48 @@ npm install -D tsc-alias
 
 ### TypeOrm 注意事項
 
-#### (一).Schema 設定
+#### (一).設定
 ---
+
+> 本地開發開發
+```jsx
+1. 暫時 本機資料庫自動隨你變更,開發用
+database.ts 改
+// synchronize: process.env.NODE_ENV === 'development'
+synchronize: true // 自動更新資料表
+
+index.ts 改
+關閉 : await AppDataSource.runMigrations()
+
+
+2. 正式來的時候 改回 Migration
+---
+synchronize: false
+打開 : await AppDataSource.runMigrations()
+
+// 重置all +資料庫（刪volume）
+docker compose down -v
+// 啟動all +資料庫（背景執行）
+docker compose up -d
+ 
+***** 步驟 *****
+1. // 先跑 回舊檔案
+npm run migration:run
+2. // 看已經執行過的 migrations 是否有引入
+npm run migration:show
+// 會看到
+// [X] 1 InitProject1782885693122
+// [X] 2 AddRoleSchema1783049462924
+// [X] 3 SystemMetaSchema1783307581161
+// [X] 4 AddArticleSchema1785134269557
+
+3. // 執行 要新增的檔案
+npm run migration:generate AddNewebpaySchema
+// 產生的檔案 要加 import type 
+
+4. // 啟動
+npm run dev
+```
 
 > 新建立 Schema
 
@@ -844,20 +884,12 @@ npm install -D typescript tsx @types/node @types/pg
 
 > 開發流（Workflow）
 
-1. 本地開發開發
-```jsx
-本地開發：直接改 Entity，因為
-synchronize 是 true，
-// synchronize: process.env.NODE_ENV === 'development',
-本機資料庫自動隨你變更。
-```
-
-2. 初始化Migration
+1. 初始化Migration
 ```jsx
 確保設定檔中 synchronize: false
 ```
 
-3. 清空資料庫
+2. 清空資料庫
 ```jsx
 清空並「立刻重啟」資料庫（關鍵順序）
 我們要讓資料庫變成全空，但必須是開著的
@@ -870,7 +902,7 @@ docker compose down -v
 docker compose up -d
 ```
 
-4. 初始化 對著「空資料庫」拍快照
+3. 初始化 對著「空資料庫」拍快照
 ```jsx
 1. 建立藍圖
 npm run migration:generate InitProject
@@ -891,7 +923,7 @@ import type { MigrationInterface, QueryRunner } from "typeorm"
 npm run migration:run
 ```
 
-5. 檢查與大功告成
+4. 檢查與大功告成
 ```jsx
 database.ts 程式碼中的  
 打開 await AppDataSource.runMigrations() 
@@ -905,7 +937,7 @@ database.ts 程式碼中的
 npm run dev 
 ```
 
-6. Zeabur雲端
+5. Zeabur雲端
 ```jsx
 推送上雲：git push 到 GitHub。
 Zeabur 接手： 雲端執行：Zeabur 執行新設定的 start 指令
@@ -920,7 +952,7 @@ Zeabur 接手： 雲端執行：Zeabur 執行新設定的 start 指令
 }
 ```
 
-7. 之後重複版控
+6. 之後重複版控
 ```jsx
 修改 UserSchema.ts 增加欄位（例如新增 email）
 
@@ -970,7 +1002,7 @@ npm run migration:run
 6. 啟動專案：執行 npm run dev
 ```
 
-8. 流程圖
+7. 流程圖
 ```jsx
       ┌────────────────────────┐
       │  修改 Entity (Schema)   │
@@ -1073,5 +1105,117 @@ CREATE TABLE users (
     age INT NOT NULL,
     role TEXT NOT NULL DEFAULT 'user'
 );
+```
+
+### 藍新金流
+
+#### (一).套件
+
+> ngrok
+
+```jsx
+// 安裝文件
+// https://hackmd.io/swlhkvAWTc-0XD6Cn8IXpw?view#2ngrok
+
+// 串接文件
+// https://hackmd.io/HYBMkvilRlWKrnFD7cGfrA
+
+// # === 藍新金流設定 ===
+// NEWEBPAY_MERCHANT_ID=你的商店代號
+// NEWEBPAY_HASH_KEY=你的HashKey
+// NEWEBPAY_HASH_IV=你的HashIV
+// NEWEBPAY_VERSION=2.0
+// NEWEBPAY_PAY_GATEWAY=https://ccore.newebpay.com/MPG/mpg_gateway
+// NEWEBPAY_NOTIFY_URL=https://你的ngrok-domain/api/newebpay/notify
+// NEWEBPAY_RETURN_URL=https://你的ngrok-domain/api/newebpay/return
+// FRONTEND_URL=http://localhost:3000
+
+// ~金流文件
+https://hackmd.io/HYBMkvilRlWKrnFD7cGfrA
+
+~啟動指令: ngrok 指令 (啟動後 才可以連-藍新金流)
+~公司防毒會擋 用下面新方式
+// 確保 Docker 已啟動（backend 跑在 port 8080），然後開另一個終端機執行：
+// ngrok http --url=你的domain名稱 8080
+// ngrok 執行後不要關閉這個終端機視窗，它需要一直開著。
+ngrok http --url=unparceled-lashay-unmotile.ngrok-free.dev 8080
+```
+
+> 使用 VS Code
+
+```jsx
+// 使用 VS Code 內建的 Port Forwarding（免指令）
+如果你是用 VS Code 開發：
+* 切換到底部的 「連接埠 (Ports)」 分頁（在 Terminal / 終端機旁邊）。
+* 點擊 「轉發連接埠 (Forward a Port)」。
+* 輸入 8080。
+* 在「可見度 (Visibility)」按右鍵改為 「公開 (Public)」（藍新金流 Webhook 才能打得進來）。
+* 複製「轉發位址 (Forwarded Address)」即為對外 HTTPS 網址。
+* 然後貼到 藍新的2個網址
+```
+
+
+#### (二).測試卡號
+
+> 測試卡號
+
+```jsx
+| 項目 | 填入內容 |
+|------|---------|
+| 卡號 | `4000-2211-1111-1111` |
+| 有效期限 | 任意未來日期，例如 `12/30` |
+| 背面末三碼 | `222` |
+| 持卡人姓名 | 隨意填，例如 `TEST` |
+| 持卡人電話 | 隨意填，例如 `0912345678` |
+| 付款人信箱 | 隨意填 `ooopp42@gmail.com` |
+```
+
+
+#### (三).金流功能-檔案
+
+> 網址
+
+```jsx
+// API
+// 課程方案: http://localhost:8080/course_plans
+// 訂單方案: http://localhost:8080/orders/creditPackageId
+
+// 付款頁
+http://127.0.0.1:5500/public/payment-plans.html
+// 結果頁
+http://127.0.0.1:5500/public/payment-result.html
+
+// 成功
+---
+http://127.0.0.1:5500/public/payment-result.html?status=success&orderNo=17876426184540s3s
+```
+
+> 檔案
+
+```jsx
+payment-plans.html
+payment-result.html
+
+// controllers
+coursePlanController.ts
+npOrderController.ts
+// models
+index.ts
+CoursePlanSchema.ts
+CreditPurchaseSchema.ts
+NpOrderSchema.ts
+NpUserSchema.ts
+// routes
+coursePlanRoutes.ts
+newebpayRoutes.ts
+npOrderRoutes.ts
+// seeds
+index.ts
+coursePlans.seed.ts
+npUsers.seed.ts
+// utils
+newebpayEncrypt.ts
+// zod
+NpOrderZod.ts
 ```
 
